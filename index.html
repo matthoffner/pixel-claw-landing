@@ -3,43 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Claw — Hoffner Systems</title>
+    <title>Pixel Claw — Secure Agent Clients</title>
     <style>
-      :root{--bg:#0f0f12;--panel:#17171d;--line:#30303d;--text:#f5f5fa;--muted:#c8c8d7;--pink:#ff4db8;--cyan:#48e2ff}
-      *{box-sizing:border-box}
-      body{margin:0;font-family:"IBM Plex Mono",ui-monospace,monospace;background:linear-gradient(135deg,#0f0f12,#151528 60%,#1f1230);color:var(--text)}
-      .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 70px}
-      .neon{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan)}
-      h1{font-size:clamp(2.1rem,6vw,4rem);line-height:1.04;margin:10px 0 14px;background:linear-gradient(90deg,var(--cyan),#fff,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
-      p{color:var(--muted);line-height:1.6;max-width:74ch}
-      .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:18px}
-      .tile{border:1px solid var(--line);background:rgba(23,23,29,.75);padding:14px;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
-      .tile b{display:block;color:#fff;margin-bottom:8px}
-      .cta{display:inline-block;margin-top:18px;padding:11px 14px;border:1px solid var(--cyan);color:var(--cyan);text-decoration:none;border-radius:999px}
+      :root{--bg:#0c0f18;--text:#f4f7ff;--muted:#c5cce3;--line:#2d3757;--cyan:#5be5ff;--pink:#ff5dc0}
+      *{box-sizing:border-box} html,body{margin:0}
+      body{font-family:Inter,ui-sans-serif,system-ui;background:radial-gradient(1000px 600px at 85% -5%,#2a1748 0%,transparent 55%),linear-gradient(140deg,#0c0f18,#12172b);color:var(--text)}
+      .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 70px}
+      .hero{border:1px solid var(--line);border-radius:20px;background:rgba(16,20,36,.85);padding:24px;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+      .kicker{font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--cyan)}
+      h1{font-size:clamp(2rem,5.2vw,4.4rem);line-height:1.03;margin:10px 0 12px;background:linear-gradient(90deg,var(--cyan),#fff,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+      p{color:var(--muted);line-height:1.65}
+      .cta{display:inline-block;margin-top:14px;padding:11px 15px;border-radius:999px;border:1px solid var(--cyan);color:var(--cyan);text-decoration:none;font-weight:700}
+      .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
+      .card{border:1px solid var(--line);background:#131a32;padding:14px;border-radius:14px}
+      .card h3{margin:0 0 8px}
     </style>
   </head>
   <body>
     <main class="wrap">
-      <div class="neon">Pixel Claw • Terminal + Remote Agents</div>
-      <h1>Personalized secure AI clients that ship products.</h1>
-      <p>Pixel Claw combines standalone agent infrastructure, secure remote control, and autonomous product iteration into one operator-ready experience.</p>
-
-      <section class="tiles">
-        <article class="tile">
-          <b>Standalone pixel agent framework</b>
-          <p>Build your own UI or plug into the existing pixel-agents fork. Pixel Claw is modular so teams can own the interface layer without rebuilding the core runtime.</p>
-        </article>
-        <article class="tile">
-          <b>Remote control + personalized secure client app</b>
-          <p>Run and supervise agents from a personalized secure client application with push notifications, so operators can intervene fast without staying glued to one machine.</p>
-        </article>
-        <article class="tile">
-          <b>Autonomous product builder</b>
-          <p>Generate, launch, and iterate features with A/B loops designed to converge on winners, not just outputs.</p>
-        </article>
+      <section class="hero">
+        <div class="kicker">Pixel Claw • Hoffner Systems</div>
+        <h1>Secure, personalized AI clients that actually ship products.</h1>
+        <p>Pixel Claw combines a standalone pixel agent framework, remote control, and autonomous product iteration in one operator-grade surface.</p>
+        <a class="cta" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Early%20Access">Get early access</a>
       </section>
 
-      <a class="cta" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Early%20Access">Get early access</a>
+      <section class="grid">
+        <article class="card">
+          <h3>Standalone pixel agent framework</h3>
+          <p>Build your own UI or use the existing pixel-agents fork. Keep flexibility without rebuilding core runtime logic.</p>
+        </article>
+        <article class="card">
+          <h3>Remote control + secure personalized client app</h3>
+          <p>Operate from a secure personalized client with push notifications so critical interventions happen in real time.</p>
+        </article>
+        <article class="card">
+          <h3>Autonomous product builder</h3>
+          <p>Generate features, run structured A/B loops, and promote winners with less human coordination overhead.</p>
+        </article>
+      </section>
     </main>
   </body>
 </html>
