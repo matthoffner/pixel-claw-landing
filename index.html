@@ -6,27 +6,39 @@
     <title>Pixel Claw — Hoffner Systems</title>
     <style>
       :root{--bg:#0f0f12;--panel:#17171d;--line:#30303d;--text:#f5f5fa;--muted:#c8c8d7;--pink:#ff4db8;--cyan:#48e2ff}
-      *{box-sizing:border-box} body{margin:0;font-family:"IBM Plex Mono",ui-monospace,monospace;background:linear-gradient(135deg,#0f0f12,#151528 60%,#1f1230);color:var(--text)}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:"IBM Plex Mono",ui-monospace,monospace;background:linear-gradient(135deg,#0f0f12,#151528 60%,#1f1230);color:var(--text)}
       .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 70px}
       .neon{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan)}
       h1{font-size:clamp(2.1rem,6vw,4rem);line-height:1.04;margin:10px 0 14px;background:linear-gradient(90deg,var(--cyan),#fff,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
-      p{color:var(--muted);line-height:1.6;max-width:70ch}
-      .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:18px}
+      p{color:var(--muted);line-height:1.6;max-width:74ch}
+      .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:18px}
       .tile{border:1px solid var(--line);background:rgba(23,23,29,.75);padding:14px;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset}
-      .tile b{color:#fff}
+      .tile b{display:block;color:#fff;margin-bottom:8px}
       .cta{display:inline-block;margin-top:18px;padding:11px 14px;border:1px solid var(--cyan);color:var(--cyan);text-decoration:none;border-radius:999px}
     </style>
   </head>
   <body>
     <main class="wrap">
       <div class="neon">Pixel Claw • Terminal + Remote Agents</div>
-      <h1>Hands-on agent workflows for people who actually ship.</h1>
-      <p>Pixel Claw reimagines terminal-native collaboration: run, steer, and debug autonomous work locally or remotely with minimal ceremony and maximum control.</p>
+      <h1>Personalized secure AI clients that ship products.</h1>
+      <p>Pixel Claw combines standalone agent infrastructure, secure remote control, and autonomous product iteration into one operator-ready experience.</p>
+
       <section class="tiles">
-        <article class="tile"><b>Live terminal loops</b><p>Agents execute where you can see every move and intervene instantly.</p></article>
-        <article class="tile"><b>Remote capability bridge</b><p>Bring distributed environments into one operator surface.</p></article>
-        <article class="tile"><b>Built for builders</b><p>No fluff dashboard layer between you and output.</p></article>
+        <article class="tile">
+          <b>Standalone pixel agent framework</b>
+          <p>Build your own UI or plug into the existing pixel-agents fork. Pixel Claw is modular so teams can own the interface layer without rebuilding the core runtime.</p>
+        </article>
+        <article class="tile">
+          <b>Remote control + personalized secure client app</b>
+          <p>Run and supervise agents from a personalized secure client application with push notifications, so operators can intervene fast without staying glued to one machine.</p>
+        </article>
+        <article class="tile">
+          <b>Autonomous product builder</b>
+          <p>Generate, launch, and iterate features with A/B loops designed to converge on winners, not just outputs.</p>
+        </article>
       </section>
+
       <a class="cta" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Early%20Access">Get early access</a>
     </main>
   </body>
