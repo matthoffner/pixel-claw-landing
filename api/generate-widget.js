@@ -31,7 +31,22 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0.2,
-        response_format: { type: 'json_object' },
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'pixel_widget_payload',
+            strict: true,
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                theme: { type: 'string', enum: ['default', 'pink'] },
+                sourceCode: { type: 'string' }
+              },
+              required: ['theme', 'sourceCode']
+            }
+          }
+        },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: prompt }

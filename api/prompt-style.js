@@ -22,12 +22,26 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0,
-        response_format: { type: 'json_object' },
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'prompt_style',
+            strict: true,
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                theme: { type: 'string', enum: ['default', 'pink'] }
+              },
+              required: ['theme']
+            }
+          }
+        },
         messages: [
           {
             role: 'system',
             content:
-              'You convert UI style intent into a tiny JSON object. Output JSON only with: {"theme":"default|pink"}. Use pink when user intent clearly asks for pink/rose/fuchsia/magenta vibes. Otherwise default.'
+              'Choose theme from enum only. Use pink when user intent clearly asks for pink/rose/fuchsia/magenta vibes. Otherwise default.'
           },
           { role: 'user', content: prompt }
         ],
