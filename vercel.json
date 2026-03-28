@@ -1,1 +1,6 @@
-{ "cleanUrls": true }
+{
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/poc/web-demo", "destination": "/poc/web-demo.html" }
+  ]
+}
