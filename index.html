@@ -3,44 +3,292 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Claw — Secure Agent Clients</title>
+    <title>Pixel Claw — Agent Microapp Platform</title>
+    <meta
+      name="description"
+      content="Pixel Claw is building a unified app + web platform for customizable agent widgets, shared memory, and rapid microapp subagent shipping."
+    />
     <style>
-      :root{--bg:#0c0f18;--text:#f4f7ff;--muted:#c5cce3;--line:#2d3757;--cyan:#5be5ff;--pink:#ff5dc0}
-      *{box-sizing:border-box} html,body{margin:0}
-      body{font-family:Inter,ui-sans-serif,system-ui;background:radial-gradient(1000px 600px at 85% -5%,#2a1748 0%,transparent 55%),linear-gradient(140deg,#0c0f18,#12172b);color:var(--text)}
-      .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 70px}
-      .hero{border:1px solid var(--line);border-radius:20px;background:rgba(16,20,36,.85);padding:24px;box-shadow:0 30px 60px rgba(0,0,0,.35)}
-      .kicker{font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--cyan)}
-      h1{font-size:clamp(2rem,5.2vw,4.4rem);line-height:1.03;margin:10px 0 12px;background:linear-gradient(90deg,var(--cyan),#fff,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
-      p{color:var(--muted);line-height:1.65}
-      .cta{display:inline-block;margin-top:14px;padding:11px 15px;border-radius:999px;border:1px solid var(--cyan);color:var(--cyan);text-decoration:none;font-weight:700}
-      .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
-      .card{border:1px solid var(--line);background:#131a32;padding:14px;border-radius:14px}
-      .card h3{margin:0 0 8px}
+      :root {
+        --bg: #090d18;
+        --bg-soft: #101a30;
+        --text: #f3f7ff;
+        --muted: #b8c6ea;
+        --line: #2b3654;
+        --cyan: #5be5ff;
+        --pink: #ff5dc0;
+        --green: #78f3b0;
+        --yellow: #ffd978;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+      }
+
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background:
+          radial-gradient(980px 640px at 85% -10%, #2f1a4d 0%, transparent 58%),
+          linear-gradient(150deg, #090d18, #0f1629 65%, #10152a 100%);
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 18px 72px;
+      }
+
+      .hero,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(14, 21, 40, 0.9);
+        box-shadow: 0 28px 56px rgba(0, 0, 0, 0.35);
+      }
+
+      .hero {
+        padding: 28px;
+      }
+
+      .kicker {
+        font-size: 12px;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+
+      h1 {
+        margin: 10px 0 12px;
+        font-size: clamp(2rem, 5.2vw, 4.1rem);
+        line-height: 1.03;
+        letter-spacing: -0.02em;
+        background: linear-gradient(90deg, var(--cyan), #f6f8ff, var(--pink));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.64;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 11px 15px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        border: 1px solid var(--cyan);
+        color: #061019;
+        background: linear-gradient(90deg, var(--cyan), #86eeff);
+      }
+
+      .btn-secondary {
+        border: 1px solid var(--line);
+        color: var(--text);
+        background: #141f39;
+      }
+
+      .layout {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 12px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+
+      .status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 9px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pill.live {
+        border-color: #275e45;
+        color: var(--green);
+        background: rgba(20, 57, 43, 0.3);
+      }
+
+      ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+
+      li {
+        margin: 6px 0;
+        color: var(--muted);
+      }
+
+      .check {
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .now {
+        color: var(--yellow);
+        font-weight: 700;
+      }
+
+      .next {
+        color: #8ad5ff;
+        font-weight: 700;
+      }
+
+      .value-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+        background: var(--bg-soft);
+      }
+
+      .card h3 {
+        margin: 0 0 7px;
+        font-size: 16px;
+      }
+
+      .roadmap {
+        margin-top: 12px;
+      }
+
+      .roadmap-row {
+        border-top: 1px dashed #2a3552;
+        padding: 10px 0;
+      }
+
+      .roadmap-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .roadmap-row strong {
+        color: var(--text);
+      }
+
+      .footer {
+        margin-top: 16px;
+        color: #95a6d6;
+        font-size: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <main class="wrap">
       <section class="hero">
         <div class="kicker">Pixel Claw • Hoffner Systems</div>
-        <h1>Secure, personalized AI clients that actually ship products.</h1>
-        <p>Pixel Claw combines a standalone pixel agent framework, remote control, and autonomous product iteration in one operator-grade surface.</p>
-        <a class="cta" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Early%20Access">Get early access</a>
+        <h1>The agent microapp platform for app + web, from one runtime.</h1>
+        <p>
+          Build custom agent widgets with memory, launch new subagent microapps fast, and ship one unified
+          experience across native + web without rebuilding the stack each time.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Pilot%20Access">Request pilot access</a>
+          <a class="btn btn-secondary" href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Design%20Partner">Become a design partner</a>
+        </div>
       </section>
 
-      <section class="grid">
-        <article class="card">
-          <h3>Standalone pixel agent framework</h3>
-          <p>Build your own UI or use the existing pixel-agents fork. Keep flexibility without rebuilding core runtime logic.</p>
+      <section class="layout">
+        <article class="panel">
+          <h2>Live Build Progress</h2>
+          <div class="status">
+            <span class="pill live">LIVE: active development</span>
+            <span class="pill">Track: Expo + server-driven microapps</span>
+            <span class="pill">Goal: Widget + memory-customized agents</span>
+          </div>
+
+          <ul>
+            <li><span class="check">✓ Done:</span> Defined POC architecture for unified app/web shell + subagent manifests.</li>
+            <li><span class="check">✓ Done:</span> Positioned Pixel Claw as a product platform (not just another agent wrapper).</li>
+            <li><span class="now">→ Now:</span> Scaffolding microapp contract for rapid subagent launches inside one host surface.</li>
+            <li><span class="next">↗ Next:</span> Add memory namespaces (global + per-agent + per-session) for customizable behaviors.</li>
+            <li><span class="next">↗ Next:</span> Demo flow: pick agent → inject memory profile → run task → share output.</li>
+          </ul>
+
+          <div class="footer">Last updated: Mar 8, 2026 • Progress notes are intentionally public to attract pilot teams.</div>
         </article>
-        <article class="card">
-          <h3>Remote control + secure personalized client app</h3>
-          <p>Operate from a secure personalized client with push notifications so critical interventions happen in real time.</p>
+
+        <article class="panel">
+          <h2>What teams buy</h2>
+          <div class="value-grid">
+            <div class="card">
+              <h3>Rapid microapp shipping</h3>
+              <p>Launch new subagent experiences via manifests and shared runtime primitives instead of one-off app rebuilds.</p>
+            </div>
+            <div class="card">
+              <h3>Custom memory per agent</h3>
+              <p>Tune behavior with persistent memory scopes so agents feel specialized, not generic.</p>
+            </div>
+            <div class="card">
+              <h3>One experience, all surfaces</h3>
+              <p>Unify native and web delivery so users get a consistent operator-grade product layer everywhere.</p>
+            </div>
+          </div>
         </article>
-        <article class="card">
-          <h3>Autonomous product builder</h3>
-          <p>Generate features, run structured A/B loops, and promote winners with less human coordination overhead.</p>
-        </article>
+      </section>
+
+      <section class="panel roadmap">
+        <h2>POC Roadmap (Pixel Agents)</h2>
+        <div class="roadmap-row">
+          <strong>Phase 1 — Platform spine:</strong>
+          <p>Host shell, agent registry, and subagent microapp contract.</p>
+        </div>
+        <div class="roadmap-row">
+          <strong>Phase 2 — Memory engine:</strong>
+          <p>Scoped memory + profile injection to personalize agent widgets per user/workflow.</p>
+        </div>
+        <div class="roadmap-row">
+          <strong>Phase 3 — Revenue demo:</strong>
+          <p>Clickable widget-first demo showing time-to-new-microapp and team throughput gains.</p>
+        </div>
       </section>
     </main>
   </body>
