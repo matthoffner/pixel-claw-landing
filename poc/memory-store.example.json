@@ -1,0 +1,15 @@
+{
+  "global:user:matt": {
+    "voice": "direct",
+    "riskPosture": "practical",
+    "shippingMode": "fast"
+  },
+  "agent:forge-builder": {
+    "preferredOutput": "working code + short status",
+    "constraints": ["small reversible commits", "ship user-visible deltas"]
+  },
+  "session:demo": {
+    "objective": "launch widget flow by Friday",
+    "blockers": []
+  }
+}

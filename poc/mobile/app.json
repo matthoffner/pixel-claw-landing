@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Pixel Agents",
+    "slug": "pixel-agents",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hoffnersystems.pixelagents"
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "pixel-agents-poc"
+      }
+    }
+  }
+}

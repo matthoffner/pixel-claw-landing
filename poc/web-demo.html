@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Agents POC Demo</title>
+    <style>
+      body { font-family: Inter, system-ui, sans-serif; margin: 0; background:#0b1020; color:#eef3ff; }
+      .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 40px; }
+      .card { border:1px solid #2b3654; border-radius:14px; background:#111833; padding:14px; margin-bottom:12px; }
+      h1,h2 { margin: 0 0 8px; }
+      p,li,code { color:#c4d0ee; }
+      select, textarea, button { width:100%; border-radius:10px; border:1px solid #31406b; background:#0d1430; color:#eef3ff; padding:10px; }
+      button { cursor:pointer; background: linear-gradient(90deg,#5be5ff,#8af0ff); color:#061019; font-weight:700; border:none; }
+      .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      pre { overflow:auto; background:#090f24; border:1px solid #24345a; border-radius:10px; padding:10px; }
+      @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>Pixel Agents Microapp POC</h1>
+      <p>Pick an agent, attach memory scopes, and generate a widget-config payload shared across app + web.</p>
+
+      <section class="card">
+        <h2>1) Select Agent</h2>
+        <select id="agentSelect"></select>
+      </section>
+
+      <section class="card row">
+        <div>
+          <h2>2) Memory Scopes</h2>
+          <label>Global memory namespace</label>
+          <input id="globalNs" value="global:user:matt" />
+          <label>Agent memory namespace</label>
+          <input id="agentNs" value="" />
+          <label>Session memory namespace</label>
+          <input id="sessionNs" value="session:demo" />
+        </div>
+        <div>
+          <h2>3) Widget config</h2>
+          <textarea id="widgetPrefs" rows="8">{"theme":"midnight","density":"compact","defaultTab":"console"}</textarea>
+          <button id="generate">Generate unified payload</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Output Payload (send to native + web shells)</h2>
+        <pre id="output"></pre>
+      </section>
+    </main>
+
+    <script>
+      const agents = [
+        { id:'forge-builder', name:'Forge Builder', defaultMemoryNamespace:'agent:forge-builder', widgets:['todo','timeline','console'] },
+        { id:'pixel-ops', name:'Pixel Ops', defaultMemoryNamespace:'agent:pixel-ops', widgets:['alerts','runs','runbook'] },
+        { id:'tuner-growth', name:'Tuner Growth', defaultMemoryNamespace:'agent:tuner-growth', widgets:['experiments','copy','leads'] }
+      ];
+
+      const sel = document.getElementById('agentSelect');
+      const agentNs = document.getElementById('agentNs');
+      const output = document.getElementById('output');
+
+      agents.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id; opt.textContent = `${a.name} (${a.id})`;
+        sel.appendChild(opt);
+      });
+
+      function syncNs() {
+        const active = agents.find(a => a.id === sel.value) || agents[0];
+        agentNs.value = active.defaultMemoryNamespace;
+      }
+
+      function generate() {
+        const active = agents.find(a => a.id === sel.value) || agents[0];
+        let widget;
+        try { widget = JSON.parse(document.getElementById('widgetPrefs').value); }
+        catch { widget = { parseError:'invalid JSON' }; }
+
+        const payload = {
+          runtimeVersion: 1,
+          shellTargets: ['web','expo-native'],
+          agent: active,
+          memory: {
+            global: document.getElementById('globalNs').value,
+            agent: document.getElementById('agentNs').value,
+            session: document.getElementById('sessionNs').value
+          },
+          widgetConfig: widget,
+          generatedAt: new Date().toISOString()
+        };
+        output.textContent = JSON.stringify(payload, null, 2);
+      }
+
+      sel.addEventListener('change', () => { syncNs(); generate(); });
+      document.getElementById('generate').addEventListener('click', generate);
+
+      sel.value = agents[0].id;
+      syncNs();
+      generate();
+    </script>
+  </body>
+</html>

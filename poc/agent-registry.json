@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "agents": [
+    {
+      "id": "forge-builder",
+      "name": "Forge Builder",
+      "description": "Build and iterate product surfaces quickly",
+      "defaultMemoryNamespace": "agent:forge-builder",
+      "widgets": ["todo", "timeline", "console"]
+    },
+    {
+      "id": "pixel-ops",
+      "name": "Pixel Ops",
+      "description": "Monitor deploy, incidents, and handoffs",
+      "defaultMemoryNamespace": "agent:pixel-ops",
+      "widgets": ["alerts", "runs", "runbook"]
+    },
+    {
+      "id": "tuner-growth",
+      "name": "Tuner Growth",
+      "description": "Run GTM experiments and conversion loops",
+      "defaultMemoryNamespace": "agent:tuner-growth",
+      "widgets": ["experiments", "copy", "leads"]
+    }
+  ]
+}
