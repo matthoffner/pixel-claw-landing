@@ -2,17 +2,18 @@ import React, { useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, Text, View, Pressable, TextInput } from 'react-native';
 
 const AGENTS = [
-  { id: 'forge-builder', name: 'Forge Builder', desc: 'Ship product surfaces', widgets: ['Execution Board', 'Impact KPIs', 'Release Queue'] },
-  { id: 'pixel-ops', name: 'Pixel Ops', desc: 'Operate incidents and deploy health', widgets: ['Ops Board', 'Alerts', 'Runbook'] },
-  { id: 'tuner-growth', name: 'Tuner Growth', desc: 'Conversion and GTM microapps', widgets: ['Experiment Grid', 'Funnel Health', 'Campaign Queue'] },
+  { id: 'todo-builder', name: 'Todo Widget Builder', desc: 'Generate and evolve a todo widget app', widgets: ['Planning Board', 'Today List', 'Done List'] },
+  { id: 'ops-checklist', name: 'Ops Checklist', desc: 'Track daily team operations', widgets: ['Checklist', 'Alerts', 'Daily Notes'] },
+  { id: 'habit-coach', name: 'Habit Coach', desc: 'Turn routines into actionable widgets', widgets: ['Routine Board', 'Streaks', 'Weekly Review'] },
 ] as const;
 
-type Tab = 'Overview' | 'Workflow' | 'Memory' | 'Payload';
+type Tab = 'Widget' | 'States' | 'Memory' | 'Payload';
 
 export default function App() {
-  const [agentId, setAgentId] = useState<(typeof AGENTS)[number]['id']>('forge-builder');
-  const [tab, setTab] = useState<Tab>('Overview');
-  const [mode, setMode] = useState('operator');
+  const [agentId, setAgentId] = useState<(typeof AGENTS)[number]['id']>('todo-builder');
+  const [tab, setTab] = useState<Tab>('Widget');
+  const [mode, setMode] = useState('planning');
+  const [prompt, setPrompt] = useState('Build me a todo app widget with Today, Upcoming, and Done states.');
   const [globalNs, setGlobalNs] = useState('global:user:matt');
   const [sessionNs, setSessionNs] = useState('session:widget-demo');
 
@@ -23,7 +24,9 @@ export default function App() {
       runtimeVersion: 1,
       shellTargets: ['expo-native', 'web'],
       screen: 'full-widget',
+      prompt,
       mode,
+      states: ['planning', 'active', 'done'],
       agent: activeAgent,
       memory: {
         global: globalNs,
@@ -31,14 +34,14 @@ export default function App() {
         session: sessionNs,
       },
     }),
-    [activeAgent, globalNs, mode, sessionNs]
+    [activeAgent, globalNs, mode, prompt, sessionNs]
   );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#070c1a' }}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
-        <Text style={{ color: '#eff4ff', fontSize: 28, fontWeight: '700' }}>Pixel Widget OS</Text>
-        <Text style={{ color: '#adbbe2' }}>Chat-free microapp shell. Widget is entire app screen.</Text>
+        <Text style={{ color: '#eff4ff', fontSize: 28, fontWeight: '700' }}>Prompt → Widget App</Text>
+        <Text style={{ color: '#adbbe2' }}>No chat thread. Prompt generates the full-screen widget UI.</Text>
 
         <View style={panel}>
           <Text style={label}>AGENT</Text>
@@ -62,6 +65,8 @@ export default function App() {
         </View>
 
         <View style={panel}>
+          <Text style={label}>PROMPT</Text>
+          <TextInput value={prompt} onChangeText={setPrompt} style={input} placeholderTextColor="#778ab8" multiline />
           <Text style={label}>WIDGET CONTEXT</Text>
           <TextInput value={mode} onChangeText={setMode} style={input} placeholderTextColor="#778ab8" />
           <TextInput value={globalNs} onChangeText={setGlobalNs} style={input} placeholderTextColor="#778ab8" />
@@ -69,7 +74,7 @@ export default function App() {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {(['Overview', 'Workflow', 'Memory', 'Payload'] as Tab[]).map((t) => (
+          {(['Widget', 'States', 'Memory', 'Payload'] as Tab[]).map((t) => (
             <Pressable
               key={t}
               onPress={() => setTab(t)}
@@ -87,21 +92,21 @@ export default function App() {
           ))}
         </View>
 
-        {tab === 'Overview' && (
+        {tab === 'Widget' && (
           <View style={panel}>
-            <Text style={label}>WIDGET STACK</Text>
+            <Text style={label}>GENERATED WIDGET</Text>
             <Text style={{ color: '#eff4ff', fontSize: 18, fontWeight: '700' }}>{activeAgent.name} • {mode}</Text>
             <Text style={{ color: '#adbbe2', marginTop: 8 }}>{activeAgent.widgets.join(' • ')}</Text>
+            <Text style={{ color: '#9ec4ff', marginTop: 8 }}>Prompt: {prompt}</Text>
           </View>
         )}
 
-        {tab === 'Workflow' && (
+        {tab === 'States' && (
           <View style={panel}>
-            <Text style={label}>EXECUTION FLOW</Text>
-            <Text style={line}>1) Select specialized widget agent</Text>
-            <Text style={line}>2) Inject memory profile (global + agent + session)</Text>
-            <Text style={line}>3) Execute through full-screen widget UI</Text>
-            <Text style={line}>4) Share same payload contract to web + native</Text>
+            <Text style={label}>TODO APP STATES</Text>
+            <Text style={line}><Text style={{color:'#eff4ff'}}>Planning</Text> — capture tasks and priorities</Text>
+            <Text style={line}><Text style={{color:'#eff4ff'}}>Active</Text> — focus mode + quick complete</Text>
+            <Text style={line}><Text style={{color:'#eff4ff'}}>Done</Text> — completed tasks + review</Text>
           </View>
         )}
 

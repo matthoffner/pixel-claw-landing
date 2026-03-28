@@ -55,8 +55,8 @@
   <body>
     <main class="app">
       <aside class="left">
-        <h1>Pixel Widget OS</h1>
-        <p>Chat-free agent app. The widget is the product surface.</p>
+        <h1>Prompt → Widget App</h1>
+        <p>Type a prompt (like a todo app) and Pixel Claw generates the full-screen widget experience.</p>
         <div class="stack">
           <div class="card">
             <h2>Agent</h2>
@@ -72,10 +72,15 @@
           <div class="card">
             <h2>Widget mode</h2>
             <select id="mode">
-              <option value="operator">Operator</option>
-              <option value="builder">Builder</option>
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
               <option value="review">Review</option>
             </select>
+          </div>
+          <div class="card">
+            <h2>Prompt to generate app</h2>
+            <div class="label">Example</div>
+            <input id="promptInput" value="Build me a todo app widget with Today, Upcoming, and Done states." />
           </div>
         </div>
       </aside>
@@ -98,11 +103,11 @@
 
     <script>
       const AGENTS = [
-        { id:'forge-builder', name:'Forge Builder', desc:'Ship product surfaces', widgets:['Execution Board','Impact KPIs','Release Queue'] },
-        { id:'pixel-ops', name:'Pixel Ops', desc:'Operate incidents and deploy health', widgets:['Ops Board','Alerts','Runbook'] },
-        { id:'tuner-growth', name:'Tuner Growth', desc:'Conversion and GTM microapps', widgets:['Experiment Grid','Funnel Health','Campaign Queue'] }
+        { id:'todo-builder', name:'Todo Widget Builder', desc:'Generate and evolve a todo widget app', widgets:['Planning Board','Today List','Done List'] },
+        { id:'ops-checklist', name:'Ops Checklist', desc:'Track daily team operations', widgets:['Checklist','Alerts','Daily Notes'] },
+        { id:'habit-coach', name:'Habit Coach', desc:'Turn routines into actionable widgets', widgets:['Routine Board','Streaks','Weekly Review'] }
       ];
-      const TABS = ['Overview','Workflow','Memory','Payload'];
+      const TABS = ['Widget','States','Memory','Payload'];
 
       let state = { agentId: AGENTS[0].id, tab: 'Overview' };
 
@@ -113,11 +118,14 @@
       function activeAgent() { return AGENTS.find(a => a.id === state.agentId) || AGENTS[0]; }
 
       function payload() {
+        const prompt = document.getElementById('promptInput').value;
         return {
           runtimeVersion: 1,
           shellTargets: ['web','expo-native'],
+          prompt,
           agent: activeAgent(),
           mode: document.getElementById('mode').value,
+          states: ['planning','active','done'],
           memory: {
             global: document.getElementById('globalNs').value,
             agent: `agent:${activeAgent().id}`,
@@ -154,29 +162,29 @@
         const agent = activeAgent();
         const mode = document.getElementById('mode').value;
         document.getElementById('title').textContent = `${agent.name} • ${mode} mode`;
-        document.getElementById('subtitle').textContent = 'No chat surface. This is a full-screen widget microapp.';
+        document.getElementById('subtitle').textContent = 'Prompt defines the widget app. No chat thread needed.';
 
-        if (state.tab === 'Overview') {
+        if (state.tab === 'Widget') {
           contentEl.innerHTML = `
             <div class="kpis">
-              <div class="kpi"><div style="color:#9ab4e6">Active widgets</div><div class="num">${agent.widgets.length}</div></div>
+              <div class="kpi"><div style="color:#9ab4e6">Screens</div><div class="num">3</div></div>
               <div class="kpi"><div style="color:#9ab4e6">Memory scopes</div><div class="num">3</div></div>
               <div class="kpi"><div style="color:#9ab4e6">Surface</div><div class="num">App+Web</div></div>
             </div>
-            <div class="panel"><h2>Widget stack</h2><p>${agent.widgets.join(' • ')}</p></div>
+            <div class="panel"><h2>Generated widget modules</h2><p>${agent.widgets.join(' • ')}</p></div>
+            <div class="panel"><h2>Prompt</h2><p>${document.getElementById('promptInput').value}</p></div>
           `;
           return;
         }
 
-        if (state.tab === 'Workflow') {
+        if (state.tab === 'States') {
           contentEl.innerHTML = `
             <div class="panel">
-              <h2>Execution flow</h2>
+              <h2>Todo app state flow</h2>
               <div class="timeline">
-                <div class="step">1) User picks specialized agent widget</div>
-                <div class="step">2) Memory profile injected (global + agent + session)</div>
-                <div class="step">3) Agent-specific UI executes tasks directly</div>
-                <div class="step">4) Output shared to app/web shells with same payload</div>
+                <div class="step"><strong>Planning</strong> — capture tasks, estimate effort, batch by context.</div>
+                <div class="step"><strong>Active</strong> — focus mode with Today list and quick complete actions.</div>
+                <div class="step"><strong>Done</strong> — completed tasks, streaks, and review notes.</div>
               </div>
             </div>
           `;
@@ -187,7 +195,7 @@
           const p = payload();
           contentEl.innerHTML = `
             <div class="panel">
-              <h2>Active memory namespaces</h2>
+              <h2>Personalization memory</h2>
               <ul>
                 <li><strong>Global:</strong> ${p.memory.global}</li>
                 <li><strong>Agent:</strong> ${p.memory.agent}</li>
@@ -206,6 +214,7 @@
       document.getElementById('mode').addEventListener('change', drawContent);
       document.getElementById('globalNs').addEventListener('input', drawContent);
       document.getElementById('sessionNs').addEventListener('input', drawContent);
+      document.getElementById('promptInput').addEventListener('input', drawContent);
       document.getElementById('regen').addEventListener('click', drawContent);
       render();
     </script>
