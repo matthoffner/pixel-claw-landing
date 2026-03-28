@@ -132,6 +132,29 @@
         try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
       }
 
+      function applyThemeFromPrompt(prompt) {
+        const p = (prompt || '').toLowerCase();
+        const root = document.documentElement;
+
+        if (p.includes('pink') || p.includes('magenta') || p.includes('fuchsia') || p.includes('rose')) {
+          root.style.setProperty('--bg', '#140812');
+          root.style.setProperty('--panel', '#2a1031');
+          root.style.setProperty('--line', '#6a2c79');
+          root.style.setProperty('--text', '#ffeefe');
+          root.style.setProperty('--muted', '#f0bce9');
+          root.style.setProperty('--cyan', '#ff7bd5');
+          return;
+        }
+
+        // default theme
+        root.style.setProperty('--bg', '#060b17');
+        root.style.setProperty('--panel', '#111a35');
+        root.style.setProperty('--line', '#2a3c67');
+        root.style.setProperty('--text', '#eef4ff');
+        root.style.setProperty('--muted', '#aebce0');
+        root.style.setProperty('--cyan', '#5be5ff');
+      }
+
       async function connectMcp() {
         mcpConnected = true;
         const provider = mcpProviderEl.value;
@@ -327,6 +350,7 @@
         try {
           await ensureRuntime();
           const prompt = promptEl.value.trim() || 'Todo app widget';
+          applyThemeFromPrompt(prompt);
           const source = appSource(prompt);
           statusEl.textContent = 'Compiling app…';
           const result = await esbuild.transform(source, { loader: 'ts', target: 'es2020', format: 'iife' });
