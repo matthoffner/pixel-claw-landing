@@ -105,7 +105,7 @@
     </main>
 
     <script type="module">
-      import * as esbuild from 'https://esm.sh/esbuild-wasm@0.25.3';
+      import * as esbuild from 'https://unpkg.com/esbuild-wasm@0.25.3/esm/browser.min.js';
 
       const statusEl = document.getElementById('status');
       const promptEl = document.getElementById('prompt');
@@ -307,7 +307,7 @@
       async function ensureRuntime() {
         if (runtimeReady) return;
         statusEl.textContent = 'Initializing in-browser compiler…';
-        await esbuild.initialize({ wasmURL: 'https://esm.sh/esbuild-wasm@0.25.3/esbuild.wasm' });
+        await esbuild.initialize({ wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.3/esbuild.wasm' });
         runtimeReady = true;
       }
 
