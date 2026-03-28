@@ -366,18 +366,29 @@
             payload = await generateWidgetFromLLM(prompt);
           } catch (err) {
             console.warn('LLM generation failed, using local fallback', err);
-            payload = { theme: 'default', sourceCode: appSource(prompt) };
+            payload = { theme: 'default', sourceCode: appSource(prompt), llm: false };
           }
 
           applyTheme(payload.theme || 'default');
 
-          statusEl.textContent = 'Compiling generated app…';
-          const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
-          // eslint-disable-next-line no-new-func
-          new Function(result.code)();
+          const compileAndRun = async (sourceCode) => {
+            const result = await esbuild.transform(sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
+            // eslint-disable-next-line no-new-func
+            new Function(result.code)();
+            if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
+          };
 
-          renderFromFactory(prompt);
-          statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+          try {
+            statusEl.textContent = 'Compiling generated app…';
+            await compileAndRun(payload.sourceCode);
+            renderFromFactory(prompt);
+            statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+          } catch (err) {
+            console.warn('Generated code failed, using local fallback', err);
+            await compileAndRun(appSource(prompt));
+            renderFromFactory(prompt);
+            statusEl.textContent = 'Done with fallback. LLM output invalid; local widget template compiled.';
+          }
         } catch (err) {
           console.error(err);
           statusEl.textContent = `Compile error: ${err.message || err}`;
