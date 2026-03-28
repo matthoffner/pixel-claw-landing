@@ -109,7 +109,15 @@
       ];
       const TABS = ['Widget','States','Memory','Payload'];
 
-      let state = { agentId: AGENTS[0].id, tab: 'Overview' };
+      let state = {
+        agentId: AGENTS[0].id,
+        tab: 'Widget',
+        todos: [
+          { id: 1, title: 'Draft investor update', status: 'planning' },
+          { id: 2, title: 'Ship landing page headline test', status: 'active' },
+          { id: 3, title: 'Review TestFlight notes', status: 'done' }
+        ]
+      };
 
       const agentsEl = document.getElementById('agents');
       const tabsEl = document.getElementById('tabs');
@@ -153,8 +161,47 @@
           const b = document.createElement('button');
           b.className = 'tab' + (t === state.tab ? ' active' : '');
           b.textContent = t;
-          b.onclick = () => { state.tab = t; drawContent(); drawTabs(); };
+          b.onclick = () => { state.tab = t; render(); };
           tabsEl.appendChild(b);
+        });
+      }
+
+      function moveTodo(id, nextStatus) {
+        state.todos = state.todos.map(t => t.id === id ? { ...t, status: nextStatus } : t);
+        drawContent();
+      }
+
+      function addTodoFromPrompt() {
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt) return;
+        const derived = prompt
+          .replace(/^build me\s*/i, '')
+          .replace(/^a\s*/i, '')
+          .replace(/widget.*$/i, '')
+          .trim() || 'New task from prompt';
+        state.todos.unshift({ id: Date.now(), title: `Prototype: ${derived}`, status: 'planning' });
+        state.tab = 'States';
+        render();
+      }
+
+      function renderTodoColumn(title, status, actionLabel, actionStatus) {
+        const items = state.todos.filter(t => t.status === status);
+        return `
+          <div class="panel">
+            <h2>${title} (${items.length})</h2>
+            ${items.length === 0 ? '<p>No tasks here yet.</p>' : items.map(item => `
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid #2f3f6c;border-radius:10px;padding:9px;margin:8px 0;background:#0b132b;">
+                <div style="color:#e8f0ff">${item.title}</div>
+                ${actionStatus ? `<button class="tab" data-id="${item.id}" data-next="${actionStatus}">${actionLabel}</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function attachTodoActions() {
+        contentEl.querySelectorAll('button[data-id]').forEach(btn => {
+          btn.onclick = () => moveTodo(Number(btn.dataset.id), btn.dataset.next);
         });
       }
 
@@ -165,29 +212,30 @@
         document.getElementById('subtitle').textContent = 'Prompt defines the widget app. No chat thread needed.';
 
         if (state.tab === 'Widget') {
+          const p = document.getElementById('promptInput').value;
           contentEl.innerHTML = `
             <div class="kpis">
               <div class="kpi"><div style="color:#9ab4e6">Screens</div><div class="num">3</div></div>
-              <div class="kpi"><div style="color:#9ab4e6">Memory scopes</div><div class="num">3</div></div>
+              <div class="kpi"><div style="color:#9ab4e6">Live tasks</div><div class="num">${state.todos.length}</div></div>
               <div class="kpi"><div style="color:#9ab4e6">Surface</div><div class="num">App+Web</div></div>
             </div>
             <div class="panel"><h2>Generated widget modules</h2><p>${agent.widgets.join(' • ')}</p></div>
-            <div class="panel"><h2>Prompt</h2><p>${document.getElementById('promptInput').value}</p></div>
+            <div class="panel"><h2>Prompt</h2><p>${p}</p><button class="tab" id="generateFromPrompt">Generate/refresh todo state</button></div>
           `;
+          document.getElementById('generateFromPrompt').onclick = addTodoFromPrompt;
           return;
         }
 
         if (state.tab === 'States') {
           contentEl.innerHTML = `
-            <div class="panel">
-              <h2>Todo app state flow</h2>
-              <div class="timeline">
-                <div class="step"><strong>Planning</strong> — capture tasks, estimate effort, batch by context.</div>
-                <div class="step"><strong>Active</strong> — focus mode with Today list and quick complete actions.</div>
-                <div class="step"><strong>Done</strong> — completed tasks, streaks, and review notes.</div>
-              </div>
+            <div class="panel"><h2>Use the app</h2><p>Move tasks through real states: Planning → Active → Done.</p></div>
+            <div class="kpis">
+              ${renderTodoColumn('Planning', 'planning', 'Start', 'active')}
+              ${renderTodoColumn('Active', 'active', 'Complete', 'done')}
+              ${renderTodoColumn('Done', 'done', '', '')}
             </div>
           `;
+          attachTodoActions();
           return;
         }
 
