@@ -132,22 +132,8 @@
         try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
       }
 
-      async function applyThemeFromPrompt(prompt) {
+      function applyTheme(theme) {
         const root = document.documentElement;
-
-        let theme = 'default';
-        try {
-          const res = await fetch('/api/prompt-style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt })
-          });
-          const data = await res.json();
-          if (res.ok && data?.theme) theme = data.theme;
-        } catch (err) {
-          console.warn('Style inference failed, using default theme', err);
-        }
-
         if (theme === 'pink') {
           root.style.setProperty('--bg', '#140812');
           root.style.setProperty('--panel', '#2a1031');
@@ -164,6 +150,18 @@
         root.style.setProperty('--text', '#eef4ff');
         root.style.setProperty('--muted', '#aebce0');
         root.style.setProperty('--cyan', '#5be5ff');
+      }
+
+      async function generateWidgetFromLLM(prompt) {
+        const res = await fetch('/api/generate-widget', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Widget generation failed');
+        if (!data?.sourceCode) throw new Error('Widget generation returned empty source');
+        return data;
       }
 
       async function connectMcp() {
@@ -361,15 +359,25 @@
         try {
           await ensureRuntime();
           const prompt = promptEl.value.trim() || 'Todo app widget';
-          await applyThemeFromPrompt(prompt);
-          const source = appSource(prompt);
-          statusEl.textContent = 'Compiling app…';
-          const result = await esbuild.transform(source, { loader: 'ts', target: 'es2020', format: 'iife' });
+
+          statusEl.textContent = 'Generating widget JSON via LLM…';
+          let payload;
+          try {
+            payload = await generateWidgetFromLLM(prompt);
+          } catch (err) {
+            console.warn('LLM generation failed, using local fallback', err);
+            payload = { theme: 'default', sourceCode: appSource(prompt) };
+          }
+
+          applyTheme(payload.theme || 'default');
+
+          statusEl.textContent = 'Compiling generated app…';
+          const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
           // eslint-disable-next-line no-new-func
           new Function(result.code)();
 
           renderFromFactory(prompt);
-          statusEl.textContent = 'Done. App compiled in browser with esbuild.';
+          statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
         } catch (err) {
           console.error(err);
           statusEl.textContent = `Compile error: ${err.message || err}`;
