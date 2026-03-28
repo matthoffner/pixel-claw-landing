@@ -132,11 +132,23 @@
         try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
       }
 
-      function applyThemeFromPrompt(prompt) {
-        const p = (prompt || '').toLowerCase();
+      async function applyThemeFromPrompt(prompt) {
         const root = document.documentElement;
 
-        if (p.includes('pink') || p.includes('magenta') || p.includes('fuchsia') || p.includes('rose')) {
+        let theme = 'default';
+        try {
+          const res = await fetch('/api/prompt-style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt })
+          });
+          const data = await res.json();
+          if (res.ok && data?.theme) theme = data.theme;
+        } catch (err) {
+          console.warn('Style inference failed, using default theme', err);
+        }
+
+        if (theme === 'pink') {
           root.style.setProperty('--bg', '#140812');
           root.style.setProperty('--panel', '#2a1031');
           root.style.setProperty('--line', '#6a2c79');
@@ -146,7 +158,6 @@
           return;
         }
 
-        // default theme
         root.style.setProperty('--bg', '#060b17');
         root.style.setProperty('--panel', '#111a35');
         root.style.setProperty('--line', '#2a3c67');
@@ -350,7 +361,7 @@
         try {
           await ensureRuntime();
           const prompt = promptEl.value.trim() || 'Todo app widget';
-          applyThemeFromPrompt(prompt);
+          await applyThemeFromPrompt(prompt);
           const source = appSource(prompt);
           statusEl.textContent = 'Compiling app…';
           const result = await esbuild.transform(source, { loader: 'ts', target: 'es2020', format: 'iife' });
