@@ -3,268 +3,316 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Agents Widget OS (POC)</title>
+    <title>Pixel Claw — Prompt to Widget App</title>
     <style>
       :root {
-        --bg: #070c1a;
-        --panel: #111a33;
-        --panel-2: #0c1430;
-        --line: #2a3965;
+        --bg: #060b17;
+        --panel: #111a35;
+        --line: #2a3c67;
         --text: #eef4ff;
-        --muted: #adbbe2;
+        --muted: #aebce0;
         --cyan: #5be5ff;
-        --green: #7bf5b7;
       }
       * { box-sizing: border-box; }
       html, body { margin: 0; height: 100%; }
-      body { font-family: Inter, system-ui, sans-serif; background: radial-gradient(900px 480px at 100% -20%, #2b1850 0%, transparent 58%), var(--bg); color: var(--text); }
-      .app { min-height: 100vh; display: grid; grid-template-columns: 320px 1fr; }
-      .left { border-right: 1px solid var(--line); background: rgba(11,18,38,.9); padding: 16px; }
+      body {
+        font-family: Inter, system-ui, sans-serif;
+        color: var(--text);
+        background: radial-gradient(900px 460px at 85% -25%, #2b1650 0%, transparent 60%), var(--bg);
+      }
+      .layout { min-height: 100vh; display: grid; grid-template-columns: 360px 1fr; }
+      .left { border-right: 1px solid var(--line); background: rgba(10,16,36,.92); padding: 16px; }
       .right { padding: 16px; }
-      h1 { margin: 0 0 6px; font-size: 24px; }
-      h2 { margin: 0 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: .07em; color: #9dc8ff; }
-      p { margin: 0; color: var(--muted); line-height: 1.5; }
-      .stack { display: grid; gap: 10px; margin-top: 12px; }
-      .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px; }
-      .agent-btn { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 10px; padding: 10px; cursor: pointer; }
-      .agent-btn.active { border-color: #5be5ff; background: rgba(36,72,99,.35); }
-      .label { font-size: 12px; color: #9eb0dc; margin-bottom: 6px; }
-      input, select { width: 100%; border: 1px solid #2f3f6c; border-radius: 9px; background: #0b132b; color: var(--text); padding: 9px; }
-      .badge { display: inline-block; border: 1px solid #305f49; color: var(--green); background: rgba(26,71,50,.25); border-radius: 999px; padding: 5px 8px; font-size: 12px; }
-      .workspace { border: 1px solid var(--line); border-radius: 14px; background: rgba(13,21,42,.9); min-height: calc(100vh - 32px); display: grid; grid-template-rows: auto auto 1fr; }
-      .workspace-top { padding: 14px; border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:10px; }
-      .tabs { display:flex; gap:8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-      .tab { border:1px solid var(--line); background:#0c1530; color:var(--text); border-radius:999px; padding:8px 12px; font-size:13px; cursor:pointer; }
-      .tab.active { border-color: var(--cyan); color: #04111a; background: linear-gradient(90deg, #5be5ff, #88efff); font-weight: 700; }
-      .content { padding: 14px; display:grid; gap:12px; align-content:start; }
-      .panel { border:1px solid var(--line); border-radius:12px; background:var(--panel); padding:12px; }
-      .kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-      .kpi { border:1px solid var(--line); border-radius:10px; background:#0d1734; padding:10px; }
-      .kpi .num { font-size:22px; font-weight:700; }
-      .timeline { display:grid; gap:9px; }
-      .step { border-left:2px solid #2f426f; padding-left:9px; color: var(--muted); }
-      pre { margin:0; white-space:pre-wrap; word-break:break-word; color:#9ec4ff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      @media (max-width: 920px) {
-        .app { grid-template-columns: 1fr; }
+      h1 { margin: 0 0 6px; font-size: 26px; }
+      h2 { margin: 0 0 8px; font-size: 13px; color: #9fc8ff; text-transform: uppercase; letter-spacing: .08em; }
+      p { margin: 0; color: var(--muted); line-height: 1.45; }
+      .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); margin-top: 12px; }
+      textarea, input, button { font: inherit; }
+      textarea, input {
+        width: 100%; border: 1px solid #334673; border-radius: 10px; background: #0b1430; color: var(--text);
+        padding: 10px;
+      }
+      textarea { min-height: 92px; resize: vertical; }
+      .btn {
+        border: 1px solid #3a5b88; border-radius: 10px; background: linear-gradient(90deg,#5be5ff,#93f1ff);
+        color: #04111a; font-weight: 700; padding: 10px 12px; cursor: pointer;
+      }
+      .btn.ghost { background: #0c1633; color: var(--text); border-color: #334773; }
+      .row { display: flex; gap: 8px; }
+      .row > * { flex: 1; }
+      .status { margin-top: 10px; color: #9fd7ff; font-size: 13px; }
+      .shell {
+        border: 1px solid var(--line); border-radius: 16px; min-height: calc(100vh - 32px);
+        background: rgba(12,20,42,.92); overflow: hidden;
+      }
+      .shell-top { border-bottom: 1px solid var(--line); padding: 14px; display:flex; justify-content:space-between; align-items:center; }
+      .badge { border: 1px solid #2f5f8e; border-radius: 999px; padding: 4px 9px; font-size: 12px; color: #a8deff; }
+      #appRoot { padding: 14px; }
+      @media (max-width: 940px) {
+        .layout { grid-template-columns: 1fr; }
         .left { border-right: 0; border-bottom: 1px solid var(--line); }
-        .workspace { min-height: 65vh; }
-        .kpis { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
-    <main class="app">
+    <main class="layout">
       <aside class="left">
-        <h1>Prompt → Widget App</h1>
-        <p>Type a prompt (like a todo app) and Pixel Claw generates the full-screen widget experience.</p>
-        <div class="stack">
-          <div class="card">
-            <h2>Agent</h2>
-            <div id="agents" class="stack"></div>
+        <h1>Prompt → App</h1>
+        <p>Write what app you want. We generate a full-screen widget app, not a dev console.</p>
+
+        <div class="card">
+          <h2>Prompt</h2>
+          <textarea id="prompt">Build me a todo app widget with three states: Planning, Active, Done. Keep it fast and simple.</textarea>
+          <div class="row" style="margin-top:10px;">
+            <button id="generate" class="btn">Generate app</button>
+            <button id="seed" class="btn ghost">Seed sample tasks</button>
           </div>
-          <div class="card">
-            <h2>Memory scopes</h2>
-            <div class="label">Global namespace</div>
-            <input id="globalNs" value="global:user:matt" />
-            <div class="label" style="margin-top:8px;">Session namespace</div>
-            <input id="sessionNs" value="session:widget-demo" />
-          </div>
-          <div class="card">
-            <h2>Widget mode</h2>
-            <select id="mode">
-              <option value="planning">Planning</option>
-              <option value="active">Active</option>
-              <option value="review">Review</option>
-            </select>
-          </div>
-          <div class="card">
-            <h2>Prompt to generate app</h2>
-            <div class="label">Example</div>
-            <input id="promptInput" value="Build me a todo app widget with Today, Upcoming, and Done states." />
-          </div>
+          <div class="status" id="status">Ready.</div>
+        </div>
+
+        <div class="card">
+          <h2>Session</h2>
+          <input id="sessionNs" value="session:widget-demo:matt" />
+          <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
         </div>
       </aside>
 
       <section class="right">
-        <div class="workspace">
-          <div class="workspace-top">
+        <div class="shell">
+          <div class="shell-top">
             <div>
-              <div class="badge">LIVE POC</div>
-              <h1 id="title" style="font-size:20px;margin:8px 0 0;"></h1>
-              <p id="subtitle"></p>
+              <div class="badge">LIVE WIDGET APP</div>
+              <div style="margin-top:6px;font-weight:700;">Todo Flow Demo</div>
             </div>
-            <button class="tab" id="regen">Regenerate state</button>
+            <button id="reset" class="btn ghost" style="padding:8px 10px;">Reset</button>
           </div>
-          <div class="tabs" id="tabs"></div>
-          <div class="content" id="content"></div>
+          <div id="appRoot"></div>
         </div>
       </section>
     </main>
 
-    <script>
-      const AGENTS = [
-        { id:'todo-builder', name:'Todo Widget Builder', desc:'Generate and evolve a todo widget app', widgets:['Planning Board','Today List','Done List'] },
-        { id:'ops-checklist', name:'Ops Checklist', desc:'Track daily team operations', widgets:['Checklist','Alerts','Daily Notes'] },
-        { id:'habit-coach', name:'Habit Coach', desc:'Turn routines into actionable widgets', widgets:['Routine Board','Streaks','Weekly Review'] }
+    <script type="module">
+      import * as esbuild from 'https://esm.sh/esbuild-wasm@0.25.3';
+
+      const statusEl = document.getElementById('status');
+      const promptEl = document.getElementById('prompt');
+      const sessionEl = document.getElementById('sessionNs');
+      const appRoot = document.getElementById('appRoot');
+
+      let runtimeReady = false;
+      let appState = { todos: [] };
+
+      const defaultTodos = [
+        { id: 1, title: 'Draft weekly priorities', status: 'planning' },
+        { id: 2, title: 'Ship homepage improvement', status: 'active' },
+        { id: 3, title: 'Review completed tasks', status: 'done' }
       ];
-      const TABS = ['Widget','States','Memory','Payload'];
 
-      let state = {
-        agentId: AGENTS[0].id,
-        tab: 'Widget',
-        todos: [
-          { id: 1, title: 'Draft investor update', status: 'planning' },
-          { id: 2, title: 'Ship landing page headline test', status: 'active' },
-          { id: 3, title: 'Review TestFlight notes', status: 'done' }
-        ]
-      };
-
-      const agentsEl = document.getElementById('agents');
-      const tabsEl = document.getElementById('tabs');
-      const contentEl = document.getElementById('content');
-
-      function activeAgent() { return AGENTS.find(a => a.id === state.agentId) || AGENTS[0]; }
-
-      function payload() {
-        const prompt = document.getElementById('promptInput').value;
-        return {
-          runtimeVersion: 1,
-          shellTargets: ['web','expo-native'],
-          prompt,
-          agent: activeAgent(),
-          mode: document.getElementById('mode').value,
-          states: ['planning','active','done'],
-          memory: {
-            global: document.getElementById('globalNs').value,
-            agent: `agent:${activeAgent().id}`,
-            session: document.getElementById('sessionNs').value
-          },
-          screen: 'full-widget',
-          generatedAt: new Date().toISOString()
-        };
+      function nsKey() { return `pixel-claw:${sessionEl.value.trim() || 'session:default'}`; }
+      function saveState() { localStorage.setItem(nsKey(), JSON.stringify(appState)); }
+      function loadState() {
+        const raw = localStorage.getItem(nsKey());
+        if (!raw) return { todos: structuredClone(defaultTodos) };
+        try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
       }
 
-      function drawAgents() {
-        agentsEl.innerHTML = '';
-        AGENTS.forEach(a => {
-          const b = document.createElement('button');
-          b.className = 'agent-btn' + (a.id === state.agentId ? ' active' : '');
-          b.innerHTML = `<strong>${a.name}</strong><br><span style="font-size:12px;color:#a9b9df">${a.desc}</span>`;
-          b.onclick = () => { state.agentId = a.id; render(); };
-          agentsEl.appendChild(b);
-        });
-      }
-
-      function drawTabs() {
-        tabsEl.innerHTML = '';
-        TABS.forEach(t => {
-          const b = document.createElement('button');
-          b.className = 'tab' + (t === state.tab ? ' active' : '');
-          b.textContent = t;
-          b.onclick = () => { state.tab = t; render(); };
-          tabsEl.appendChild(b);
-        });
-      }
-
-      function moveTodo(id, nextStatus) {
-        state.todos = state.todos.map(t => t.id === id ? { ...t, status: nextStatus } : t);
-        drawContent();
-      }
-
-      function addTodoFromPrompt() {
-        const prompt = document.getElementById('promptInput').value.trim();
-        if (!prompt) return;
-        const derived = prompt
-          .replace(/^build me\s*/i, '')
-          .replace(/^a\s*/i, '')
-          .replace(/widget.*$/i, '')
-          .trim() || 'New task from prompt';
-        state.todos.unshift({ id: Date.now(), title: `Prototype: ${derived}`, status: 'planning' });
-        state.tab = 'States';
-        render();
-      }
-
-      function renderTodoColumn(title, status, actionLabel, actionStatus) {
-        const items = state.todos.filter(t => t.status === status);
+      function appSource(prompt) {
+        const safePrompt = JSON.stringify(prompt);
         return `
-          <div class="panel">
-            <h2>${title} (${items.length})</h2>
-            ${items.length === 0 ? '<p>No tasks here yet.</p>' : items.map(item => `
-              <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid #2f3f6c;border-radius:10px;padding:9px;margin:8px 0;background:#0b132b;">
-                <div style="color:#e8f0ff">${item.title}</div>
-                ${actionStatus ? `<button class="tab" data-id="${item.id}" data-next="${actionStatus}">${actionLabel}</button>` : ''}
-              </div>
-            `).join('')}
-          </div>
+          globalThis.__pixelWidgetFactory = ({ state, setState, prompt }) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'grid';
+            wrapper.style.gap = '12px';
+
+            const hero = document.createElement('div');
+            hero.style.border = '1px solid #2a3c67';
+            hero.style.borderRadius = '12px';
+            hero.style.padding = '12px';
+            hero.style.background = '#111a35';
+            hero.innerHTML = \
+              '<div style="font-size:12px;color:#9ec9ff;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Generated app</div>' +
+              '<div style="font-size:22px;font-weight:700;color:#eef4ff;">Todo Widget</div>' +
+              '<div style="margin-top:6px;color:#adbbe0;">' + prompt + '</div>';
+            wrapper.appendChild(hero);
+
+            const lanes = document.createElement('div');
+            lanes.style.display = 'grid';
+            lanes.style.gridTemplateColumns = 'repeat(auto-fit, minmax(220px, 1fr))';
+            lanes.style.gap = '10px';
+
+            const defs = [
+              { key: 'planning', title: 'Planning', action: 'Start', next: 'active' },
+              { key: 'active', title: 'Active', action: 'Complete', next: 'done' },
+              { key: 'done', title: 'Done', action: '', next: '' }
+            ];
+
+            defs.forEach(def => {
+              const lane = document.createElement('div');
+              lane.style.border = '1px solid #2a3c67';
+              lane.style.borderRadius = '12px';
+              lane.style.padding = '10px';
+              lane.style.background = '#0e1733';
+
+              const title = document.createElement('div');
+              const count = state.todos.filter(t => t.status === def.key).length;
+              title.textContent = def.title + ' (' + count + ')';
+              title.style.fontWeight = '700';
+              title.style.marginBottom = '8px';
+              lane.appendChild(title);
+
+              const tasks = state.todos.filter(t => t.status === def.key);
+              if (!tasks.length) {
+                const empty = document.createElement('div');
+                empty.style.color = '#8fa4d5';
+                empty.style.fontSize = '13px';
+                empty.textContent = 'No tasks here yet';
+                lane.appendChild(empty);
+              }
+
+              tasks.forEach(task => {
+                const row = document.createElement('div');
+                row.style.border = '1px solid #334773';
+                row.style.borderRadius = '10px';
+                row.style.padding = '8px';
+                row.style.marginBottom = '8px';
+                row.style.background = '#0b1430';
+
+                const text = document.createElement('div');
+                text.textContent = task.title;
+                text.style.marginBottom = '7px';
+                row.appendChild(text);
+
+                if (def.next) {
+                  const btn = document.createElement('button');
+                  btn.textContent = def.action;
+                  btn.style.border = '1px solid #38618f';
+                  btn.style.borderRadius = '9px';
+                  btn.style.padding = '6px 8px';
+                  btn.style.background = '#14284c';
+                  btn.style.color = '#d9ecff';
+                  btn.style.cursor = 'pointer';
+                  btn.onclick = () => {
+                    setState({
+                      ...state,
+                      todos: state.todos.map(t => t.id === task.id ? { ...t, status: def.next } : t)
+                    });
+                  };
+                  row.appendChild(btn);
+                }
+
+                lane.appendChild(row);
+              });
+
+              lanes.appendChild(lane);
+            });
+
+            const addWrap = document.createElement('div');
+            addWrap.style.border = '1px solid #2a3c67';
+            addWrap.style.borderRadius = '12px';
+            addWrap.style.padding = '12px';
+            addWrap.style.background = '#111a35';
+            addWrap.style.display = 'grid';
+            addWrap.style.gap = '8px';
+
+            const addTitle = document.createElement('div');
+            addTitle.textContent = 'Add task';
+            addTitle.style.fontWeight = '700';
+            addWrap.appendChild(addTitle);
+
+            const input = document.createElement('input');
+            input.placeholder = 'What needs to get done?';
+            input.style.width = '100%';
+            input.style.border = '1px solid #334673';
+            input.style.borderRadius = '9px';
+            input.style.padding = '9px';
+            input.style.background = '#0b1430';
+            input.style.color = '#eef4ff';
+            addWrap.appendChild(input);
+
+            const add = document.createElement('button');
+            add.textContent = 'Add to Planning';
+            add.style.border = '1px solid #3a5b88';
+            add.style.borderRadius = '9px';
+            add.style.padding = '8px 10px';
+            add.style.background = '#14284c';
+            add.style.color = '#d9ecff';
+            add.style.cursor = 'pointer';
+            add.onclick = () => {
+              const title = input.value.trim();
+              if (!title) return;
+              setState({ ...state, todos: [{ id: Date.now(), title, status: 'planning' }, ...state.todos] });
+            };
+            addWrap.appendChild(add);
+
+            wrapper.appendChild(lanes);
+            wrapper.appendChild(addWrap);
+            return wrapper;
+          };
+
+          globalThis.__pixelWidgetFactoryPrompt = ${safePrompt};
         `;
       }
 
-      function attachTodoActions() {
-        contentEl.querySelectorAll('button[data-id]').forEach(btn => {
-          btn.onclick = () => moveTodo(Number(btn.dataset.id), btn.dataset.next);
-        });
+      async function ensureRuntime() {
+        if (runtimeReady) return;
+        statusEl.textContent = 'Initializing in-browser compiler…';
+        await esbuild.initialize({ wasmURL: 'https://esm.sh/esbuild-wasm@0.25.3/esbuild.wasm' });
+        runtimeReady = true;
       }
 
-      function drawContent() {
-        const agent = activeAgent();
-        const mode = document.getElementById('mode').value;
-        document.getElementById('title').textContent = `${agent.name} • ${mode} mode`;
-        document.getElementById('subtitle').textContent = 'Prompt defines the widget app. No chat thread needed.';
+      async function compileAndRender() {
+        try {
+          await ensureRuntime();
+          const prompt = promptEl.value.trim() || 'Todo app widget';
+          const source = appSource(prompt);
+          statusEl.textContent = 'Compiling app…';
+          const result = await esbuild.transform(source, { loader: 'ts', target: 'es2020', format: 'iife' });
+          // eslint-disable-next-line no-new-func
+          new Function(result.code)();
 
-        if (state.tab === 'Widget') {
-          const p = document.getElementById('promptInput').value;
-          contentEl.innerHTML = `
-            <div class="kpis">
-              <div class="kpi"><div style="color:#9ab4e6">Screens</div><div class="num">3</div></div>
-              <div class="kpi"><div style="color:#9ab4e6">Live tasks</div><div class="num">${state.todos.length}</div></div>
-              <div class="kpi"><div style="color:#9ab4e6">Surface</div><div class="num">App+Web</div></div>
-            </div>
-            <div class="panel"><h2>Generated widget modules</h2><p>${agent.widgets.join(' • ')}</p></div>
-            <div class="panel"><h2>Prompt</h2><p>${p}</p><button class="tab" id="generateFromPrompt">Generate/refresh todo state</button></div>
-          `;
-          document.getElementById('generateFromPrompt').onclick = addTodoFromPrompt;
-          return;
+          renderFromFactory(prompt);
+          statusEl.textContent = 'Done. App compiled in browser with esbuild.';
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = `Compile error: ${err.message || err}`;
         }
-
-        if (state.tab === 'States') {
-          contentEl.innerHTML = `
-            <div class="panel"><h2>Use the app</h2><p>Move tasks through real states: Planning → Active → Done.</p></div>
-            <div class="kpis">
-              ${renderTodoColumn('Planning', 'planning', 'Start', 'active')}
-              ${renderTodoColumn('Active', 'active', 'Complete', 'done')}
-              ${renderTodoColumn('Done', 'done', '', '')}
-            </div>
-          `;
-          attachTodoActions();
-          return;
-        }
-
-        if (state.tab === 'Memory') {
-          const p = payload();
-          contentEl.innerHTML = `
-            <div class="panel">
-              <h2>Personalization memory</h2>
-              <ul>
-                <li><strong>Global:</strong> ${p.memory.global}</li>
-                <li><strong>Agent:</strong> ${p.memory.agent}</li>
-                <li><strong>Session:</strong> ${p.memory.session}</li>
-              </ul>
-            </div>
-          `;
-          return;
-        }
-
-        contentEl.innerHTML = `<div class="panel"><h2>Unified payload</h2><pre>${JSON.stringify(payload(), null, 2)}</pre></div>`;
       }
 
-      function render() { drawAgents(); drawTabs(); drawContent(); }
+      function renderFromFactory(prompt) {
+        const factory = globalThis.__pixelWidgetFactory;
+        if (!factory) return;
 
-      document.getElementById('mode').addEventListener('change', drawContent);
-      document.getElementById('globalNs').addEventListener('input', drawContent);
-      document.getElementById('sessionNs').addEventListener('input', drawContent);
-      document.getElementById('promptInput').addEventListener('input', drawContent);
-      document.getElementById('regen').addEventListener('click', drawContent);
-      render();
+        const setState = (next) => {
+          appState = next;
+          saveState();
+          renderFromFactory(prompt);
+        };
+
+        appRoot.innerHTML = '';
+        const node = factory({ state: appState, setState, prompt });
+        appRoot.appendChild(node);
+      }
+
+      function seedTasks() {
+        appState = { todos: structuredClone(defaultTodos) };
+        saveState();
+        compileAndRender();
+      }
+
+      document.getElementById('generate').addEventListener('click', compileAndRender);
+      document.getElementById('seed').addEventListener('click', seedTasks);
+      document.getElementById('reset').addEventListener('click', () => {
+        localStorage.removeItem(nsKey());
+        appState = { todos: structuredClone(defaultTodos) };
+        compileAndRender();
+      });
+      sessionEl.addEventListener('change', () => {
+        appState = loadState();
+        compileAndRender();
+      });
+
+      appState = loadState();
+      compileAndRender();
     </script>
   </body>
 </html>
