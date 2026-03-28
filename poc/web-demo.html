@@ -361,37 +361,20 @@
           const prompt = promptEl.value.trim() || 'Todo app widget';
 
           statusEl.textContent = 'Generating widget JSON via LLM…';
-          let payload;
-          try {
-            payload = await generateWidgetFromLLM(prompt);
-          } catch (err) {
-            console.warn('LLM generation failed, using local fallback', err);
-            payload = { theme: 'default', sourceCode: appSource(prompt), llm: false };
-          }
-
+          const payload = await generateWidgetFromLLM(prompt);
           applyTheme(payload.theme || 'default');
 
-          const compileAndRun = async (sourceCode) => {
-            const result = await esbuild.transform(sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
-            // eslint-disable-next-line no-new-func
-            new Function(result.code)();
-            if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
-          };
+          statusEl.textContent = 'Compiling generated app…';
+          const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
+          // eslint-disable-next-line no-new-func
+          new Function(result.code)();
+          if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
 
-          try {
-            statusEl.textContent = 'Compiling generated app…';
-            await compileAndRun(payload.sourceCode);
-            renderFromFactory(prompt);
-            statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
-          } catch (err) {
-            console.warn('Generated code failed, using local fallback', err);
-            await compileAndRun(appSource(prompt));
-            renderFromFactory(prompt);
-            statusEl.textContent = 'Done with fallback. LLM output invalid; local widget template compiled.';
-          }
+          renderFromFactory(prompt);
+          statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
         } catch (err) {
           console.error(err);
-          statusEl.textContent = `Compile error: ${err.message || err}`;
+          statusEl.textContent = `LLM compile failed (no fallback): ${err.message || err}`;
         }
       }
 
