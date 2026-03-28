@@ -142,12 +142,24 @@
       async function mcpSuggestTask(prompt) {
         if (!mcpConnected) return null;
         const provider = mcpProviderEl.value;
-        const snippets = {
-          linear: 'Triage top-priority Linear ticket',
-          notion: 'Review Notion project notes and extract next action',
-          github: 'Close one stale GitHub issue with actionable next step'
-        };
-        return `${snippets[provider] || 'Suggested task'} (${prompt.slice(0, 36)}...)`;
+        statusEl.textContent = `Asking ${provider} MCP + OpenAI for a task…`;
+
+        try {
+          const res = await fetch('/api/mcp-suggest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider, prompt })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || 'Request failed');
+          statusEl.textContent = `MCP task suggestion ready (${provider})`;
+          return data.suggestion;
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = `MCP suggestion failed: ${err.message || err}`;
+          return null;
+        }
       }
 
       globalThis.__mcpSuggestTask = mcpSuggestTask;
