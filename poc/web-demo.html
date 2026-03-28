@@ -75,6 +75,19 @@
           <input id="sessionNs" value="session:widget-demo:matt" />
           <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
         </div>
+
+        <div class="card">
+          <h2>MCP integration</h2>
+          <div class="row">
+            <select id="mcpProvider" style="width:100%;border:1px solid #334673;border-radius:10px;background:#0b1430;color:#eef4ff;padding:10px;">
+              <option value="linear">Linear</option>
+              <option value="notion">Notion</option>
+              <option value="github">GitHub</option>
+            </select>
+            <button id="mcpConnect" class="btn ghost">Connect</button>
+          </div>
+          <p id="mcpStatus" style="margin-top:8px;">Not connected</p>
+        </div>
       </aside>
 
       <section class="right">
@@ -98,9 +111,12 @@
       const promptEl = document.getElementById('prompt');
       const sessionEl = document.getElementById('sessionNs');
       const appRoot = document.getElementById('appRoot');
+      const mcpProviderEl = document.getElementById('mcpProvider');
+      const mcpStatusEl = document.getElementById('mcpStatus');
 
       let runtimeReady = false;
       let appState = { todos: [] };
+      let mcpConnected = false;
 
       const defaultTodos = [
         { id: 1, title: 'Draft weekly priorities', status: 'planning' },
@@ -115,6 +131,26 @@
         if (!raw) return { todos: structuredClone(defaultTodos) };
         try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
       }
+
+      async function connectMcp() {
+        mcpConnected = true;
+        const provider = mcpProviderEl.value;
+        mcpStatusEl.textContent = `Connected to ${provider} MCP`;
+        statusEl.textContent = `MCP ready: ${provider}`;
+      }
+
+      async function mcpSuggestTask(prompt) {
+        if (!mcpConnected) return null;
+        const provider = mcpProviderEl.value;
+        const snippets = {
+          linear: 'Triage top-priority Linear ticket',
+          notion: 'Review Notion project notes and extract next action',
+          github: 'Close one stale GitHub issue with actionable next step'
+        };
+        return `${snippets[provider] || 'Suggested task'} (${prompt.slice(0, 36)}...)`;
+      }
+
+      globalThis.__mcpSuggestTask = mcpSuggestTask;
 
       function appSource(prompt) {
         const safePrompt = JSON.stringify(prompt);
@@ -244,6 +280,21 @@
             };
             addWrap.appendChild(add);
 
+            const mcp = document.createElement('button');
+            mcp.textContent = 'Suggest with MCP';
+            mcp.style.border = '1px solid #3a5b88';
+            mcp.style.borderRadius = '9px';
+            mcp.style.padding = '8px 10px';
+            mcp.style.background = '#0f1f3f';
+            mcp.style.color = '#d9ecff';
+            mcp.style.cursor = 'pointer';
+            mcp.onclick = async () => {
+              const suggestion = await globalThis.__mcpSuggestTask(prompt);
+              if (!suggestion) return;
+              setState({ ...state, todos: [{ id: Date.now(), title: suggestion, status: 'planning' }, ...state.todos] });
+            };
+            addWrap.appendChild(mcp);
+
             wrapper.appendChild(lanes);
             wrapper.appendChild(addWrap);
             return wrapper;
@@ -301,6 +352,7 @@
 
       document.getElementById('generate').addEventListener('click', compileAndRender);
       document.getElementById('seed').addEventListener('click', seedTasks);
+      document.getElementById('mcpConnect').addEventListener('click', connectMcp);
       document.getElementById('reset').addEventListener('click', () => {
         localStorage.removeItem(nsKey());
         appState = { todos: structuredClone(defaultTodos) };
