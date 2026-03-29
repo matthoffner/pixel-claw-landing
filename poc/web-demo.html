@@ -291,6 +291,7 @@
       const decisionStopEl = document.getElementById('decisionStop');
 
       let runtimeReady = false;
+      let runtimeInitPromise = null;
       let appState = { todos: [] };
       let mcpConnected = false;
       let currentPrompt = '';
@@ -637,10 +638,22 @@
 
       async function ensureRuntime() {
         if (runtimeReady) return;
+        if (runtimeInitPromise) {
+          await runtimeInitPromise;
+          return;
+        }
+
         statusEl.textContent = 'Initializing in-browser compiler…';
         setBottomStatus('Initializing in-browser compiler…');
-        await esbuild.initialize({ wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.3/esbuild.wasm' });
-        runtimeReady = true;
+        runtimeInitPromise = esbuild.initialize({ wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.3/esbuild.wasm' })
+          .then(() => {
+            runtimeReady = true;
+          })
+          .finally(() => {
+            runtimeInitPromise = null;
+          });
+
+        await runtimeInitPromise;
       }
 
       async function generateAndCompile(prompt) {
