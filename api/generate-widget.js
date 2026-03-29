@@ -78,6 +78,15 @@ module.exports = async (req, res) => {
       return res.status(502).json({ error: 'LLM source missing __pixelWidgetFactory' });
     }
 
+    const usesMemory = /\bmemory\./.test(sourceCode);
+    const usesApi = /\bapi\./.test(sourceCode);
+    if (!usesMemory && !usesApi) {
+      return res.status(502).json({
+        error: 'LLM source missing runtime contract usage',
+        details: 'Generated code must reference memory.* or api.*'
+      });
+    }
+
     return res.status(200).json({ theme, sourceCode });
   } catch (error) {
     return res.status(500).json({ error: 'Unexpected server error', details: error?.message || String(error) });
