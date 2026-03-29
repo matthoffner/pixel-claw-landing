@@ -16,8 +16,10 @@ module.exports = async (req, res) => {
     const system = [
       'Return JSON only with keys: theme and sourceCode.',
       'theme must be "default" or "pink".',
-      'sourceCode must be valid JavaScript that defines globalThis.__pixelWidgetFactory = ({ state, setState, prompt }) => HTMLElement.',
+      'sourceCode must be valid JavaScript that defines globalThis.__pixelWidgetFactory = ({ state, setState, prompt, memory, api }) => HTMLElement.',
       'The factory MUST return a real DOM node created with document.createElement(...).',
+      'Use memory.get(key), memory.put(key, value), memory.del(key) for browser persistence (IndexedDB-backed).',
+      'Use api.suggestTask(prompt) for external submit/tool actions (MCP layer).',
       'Do not use imports, fetch, eval, or Function constructor inside sourceCode.',
       'Prefer plain DOM APIs and safe deterministic behavior.',
       'Widget should support Planning/Active/Done lanes and adding new tasks.'

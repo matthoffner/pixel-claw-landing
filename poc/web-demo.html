@@ -117,6 +117,8 @@
       let runtimeReady = false;
       let appState = { todos: [] };
       let mcpConnected = false;
+      let currentPrompt = '';
+      let memoryDbPromise = null;
 
       const defaultTodos = [
         { id: 1, title: 'Draft weekly priorities', status: 'planning' },
@@ -125,11 +127,65 @@
       ];
 
       function nsKey() { return `pixel-claw:${sessionEl.value.trim() || 'session:default'}`; }
-      function saveState() { localStorage.setItem(nsKey(), JSON.stringify(appState)); }
-      function loadState() {
-        const raw = localStorage.getItem(nsKey());
-        if (!raw) return { todos: structuredClone(defaultTodos) };
-        try { return JSON.parse(raw); } catch { return { todos: structuredClone(defaultTodos) }; }
+      function stateKey() { return `${nsKey()}:appState`; }
+
+      function openMemoryDb() {
+        if (memoryDbPromise) return memoryDbPromise;
+        memoryDbPromise = new Promise((resolve, reject) => {
+          const request = indexedDB.open('pixel-claw-memory-v1', 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error('Failed to open IndexedDB'));
+        });
+        return memoryDbPromise;
+      }
+
+      async function memoryGet(key) {
+        const db = await openMemoryDb();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction('kv', 'readonly');
+          const store = tx.objectStore('kv');
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error('IndexedDB get failed'));
+        });
+      }
+
+      async function memoryPut(key, value) {
+        const db = await openMemoryDb();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction('kv', 'readwrite');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error || new Error('IndexedDB put failed'));
+          tx.objectStore('kv').put(value, key);
+        });
+      }
+
+      async function memoryDelete(key) {
+        const db = await openMemoryDb();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction('kv', 'readwrite');
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error || new Error('IndexedDB delete failed'));
+          tx.objectStore('kv').delete(key);
+        });
+      }
+
+      async function saveState() {
+        await memoryPut(stateKey(), appState);
+      }
+
+      async function loadState() {
+        try {
+          const saved = await memoryGet(stateKey());
+          if (!saved || typeof saved !== 'object') return { todos: structuredClone(defaultTodos) };
+          return saved;
+        } catch {
+          return { todos: structuredClone(defaultTodos) };
+        }
       }
 
       function applyTheme(theme) {
@@ -199,7 +255,7 @@
       function appSource(prompt) {
         const safePrompt = JSON.stringify(prompt);
         return `
-          globalThis.__pixelWidgetFactory = ({ state, setState, prompt }) => {
+          globalThis.__pixelWidgetFactory = ({ state, setState, prompt, memory, api }) => {
             const wrapper = document.createElement('div');
             wrapper.style.display = 'grid';
             wrapper.style.gap = '12px';
@@ -359,6 +415,7 @@
         try {
           await ensureRuntime();
           const prompt = promptEl.value.trim() || 'Todo app widget';
+          currentPrompt = prompt;
 
           let lastErr = null;
           for (let attempt = 1; attempt <= 2; attempt += 1) {
@@ -402,37 +459,57 @@
 
         const setState = (next) => {
           appState = next;
-          saveState();
+          void saveState();
           renderFromFactory(prompt);
         };
 
+        const memory = {
+          get: (key) => memoryGet(`${nsKey()}:memory:${key}`),
+          put: (key, value) => memoryPut(`${nsKey()}:memory:${key}`, value),
+          del: (key) => memoryDelete(`${nsKey()}:memory:${key}`)
+        };
+
+        const api = {
+          suggestTask: (nextPrompt) => globalThis.__mcpSuggestTask(nextPrompt || prompt)
+        };
+
         appRoot.innerHTML = '';
-        const node = factory({ state: appState, setState, prompt });
+        const node = factory({ state: appState, setState, prompt, memory, api });
         if (!(node instanceof Node)) throw new Error('Generated factory did not return a DOM Node');
         appRoot.appendChild(node);
+
+        globalThis.__pixelDemo = {
+          getState: () => appState,
+          setState: async (next) => {
+            appState = next;
+            await saveState();
+            renderFromFactory(currentPrompt || prompt);
+          },
+          memory
+        };
       }
 
-      function seedTasks() {
+      async function seedTasks() {
         appState = { todos: structuredClone(defaultTodos) };
-        saveState();
-        compileAndRender();
+        await saveState();
+        await compileAndRender();
       }
 
-      document.getElementById('generate').addEventListener('click', compileAndRender);
-      document.getElementById('seed').addEventListener('click', seedTasks);
+      document.getElementById('generate').addEventListener('click', () => { void compileAndRender(); });
+      document.getElementById('seed').addEventListener('click', () => { void seedTasks(); });
       document.getElementById('mcpConnect').addEventListener('click', connectMcp);
-      document.getElementById('reset').addEventListener('click', () => {
-        localStorage.removeItem(nsKey());
+      document.getElementById('reset').addEventListener('click', async () => {
+        await memoryDelete(stateKey());
         appState = { todos: structuredClone(defaultTodos) };
-        compileAndRender();
+        await compileAndRender();
       });
-      sessionEl.addEventListener('change', () => {
-        appState = loadState();
-        compileAndRender();
+      sessionEl.addEventListener('change', async () => {
+        appState = await loadState();
+        await compileAndRender();
       });
 
-      appState = loadState();
-      compileAndRender();
+      appState = await loadState();
+      await compileAndRender();
     </script>
   </body>
 </html>
