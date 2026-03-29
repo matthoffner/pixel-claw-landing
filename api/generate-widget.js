@@ -14,9 +14,10 @@ module.exports = async (req, res) => {
     const prompt = (body.prompt || 'Build a todo app widget').toString();
 
     const system = [
-      'Return JSON only with keys: theme and sourceCode.',
+      'Return JSON only with keys: theme, sourceCode, and summary.',
       'theme must be "default" or "pink".',
       'sourceCode must be valid JavaScript that defines globalThis.__pixelWidgetFactory = ({ state, setState, prompt, memory, api }) => HTMLElement.',
+      'summary must be a concise plain-English description (max ~20 words) of what changed in this generated version.',
       'The factory MUST return a real DOM node created with document.createElement(...).',
       'Use memory.get(key), memory.put(key, value), memory.del(key) for browser persistence (IndexedDB-backed).',
       'Use api.suggestTask(prompt) for external submit/tool actions (MCP layer).',
@@ -44,9 +45,10 @@ module.exports = async (req, res) => {
               additionalProperties: false,
               properties: {
                 theme: { type: 'string', enum: ['default', 'pink'] },
-                sourceCode: { type: 'string' }
+                sourceCode: { type: 'string' },
+                summary: { type: 'string' }
               },
-              required: ['theme', 'sourceCode']
+              required: ['theme', 'sourceCode', 'summary']
             }
           }
         },
@@ -73,6 +75,11 @@ module.exports = async (req, res) => {
 
     const theme = parsed.theme === 'pink' ? 'pink' : 'default';
     const sourceCode = typeof parsed.sourceCode === 'string' ? parsed.sourceCode : '';
+    const summary = typeof parsed.summary === 'string' ? parsed.summary.trim() : '';
+
+    if (!summary) {
+      return res.status(502).json({ error: 'LLM source missing summary' });
+    }
 
     if (!sourceCode.includes('__pixelWidgetFactory')) {
       return res.status(502).json({ error: 'LLM source missing __pixelWidgetFactory' });
@@ -87,7 +94,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ theme, sourceCode });
+    return res.status(200).json({ theme, sourceCode, summary });
   } catch (error) {
     return res.status(500).json({ error: 'Unexpected server error', details: error?.message || String(error) });
   }

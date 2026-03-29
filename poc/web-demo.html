@@ -21,14 +21,14 @@
         background: radial-gradient(900px 460px at 85% -25%, #2b1650 0%, transparent 60%), var(--bg);
       }
       .layout { min-height: 100vh; display: grid; grid-template-columns: 360px 1fr; }
-      .left { border-right: 1px solid var(--line); background: rgba(10,16,36,.92); padding: 16px; }
+      .left { border-right: 1px solid var(--line); background: rgba(10,16,36,.92); padding: 16px; overflow-y: auto; max-height: 100vh; }
       .right { padding: 16px; }
       h1 { margin: 0 0 6px; font-size: 26px; }
       h2 { margin: 0 0 8px; font-size: 13px; color: #9fc8ff; text-transform: uppercase; letter-spacing: .08em; }
       p { margin: 0; color: var(--muted); line-height: 1.45; }
       .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); margin-top: 12px; }
-      textarea, input, button { font: inherit; }
-      textarea, input {
+      textarea, input, button, select { font: inherit; }
+      textarea, input, select {
         width: 100%; border: 1px solid #334673; border-radius: 10px; background: #0b1430; color: var(--text);
         padding: 10px;
       }
@@ -38,6 +38,8 @@
         color: #04111a; font-weight: 700; padding: 10px 12px; cursor: pointer;
       }
       .btn.ghost { background: #0c1633; color: var(--text); border-color: #334773; }
+      .btn.danger { background: #2e1222; color: #ffd8ea; border-color: #80456a; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
       .row { display: flex; gap: 8px; }
       .row > * { flex: 1; }
       .status { margin-top: 10px; color: #9fd7ff; font-size: 13px; }
@@ -48,9 +50,15 @@
       .shell-top { border-bottom: 1px solid var(--line); padding: 14px; display:flex; justify-content:space-between; align-items:center; }
       .badge { border: 1px solid #2f5f8e; border-radius: 999px; padding: 4px 9px; font-size: 12px; color: #a8deff; }
       #appRoot { padding: 14px; }
+      .meta { font-size: 12px; color: #95abd6; margin-top: 8px; }
+      #loopHistory { margin-top: 10px; display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
+      .loop-item { border: 1px solid #334773; border-radius: 10px; padding: 8px; background: #0b1430; }
+      .loop-item strong { font-size: 12px; color: #b9ddff; }
+      .loop-item p { margin-top: 4px; font-size: 12px; }
+      .tag { display: inline-block; margin-left: 6px; border: 1px solid #3c5f8f; border-radius: 999px; padding: 1px 6px; font-size: 11px; color: #b3ddff; }
       @media (max-width: 940px) {
         .layout { grid-template-columns: 1fr; }
-        .left { border-right: 0; border-bottom: 1px solid var(--line); }
+        .left { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
       }
     </style>
   </head>
@@ -71,6 +79,29 @@
         </div>
 
         <div class="card">
+          <h2>Design autopilot loop</h2>
+          <div class="row" style="align-items:center;">
+            <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:#c6dcff;">
+              <input id="loopEnabled" type="checkbox" style="width:auto;padding:0;" />
+              Loop mode ON
+            </label>
+            <input id="loopMax" type="number" min="1" max="20" value="8" title="Max iterations" />
+          </div>
+          <textarea id="loopGoal" style="margin-top:8px;min-height:70px;" placeholder="Design goal for loop iterations">Improve visual hierarchy, increase readability, and tighten spacing without changing core task flow.</textarea>
+          <div class="row" style="margin-top:8px;">
+            <button id="loopStart" class="btn ghost">Start loop</button>
+            <button id="loopStop" class="btn danger">Stop</button>
+          </div>
+          <textarea id="loopFeedback" style="margin-top:8px;min-height:62px;" placeholder="If denying, provide feedback here."></textarea>
+          <div class="row" style="margin-top:8px;">
+            <button id="loopApprove" class="btn">Approve + next</button>
+            <button id="loopDeny" class="btn ghost">Deny w/ feedback</button>
+          </div>
+          <div class="meta" id="loopMeta">Loop idle.</div>
+          <div id="loopHistory"></div>
+        </div>
+
+        <div class="card">
           <h2>Session</h2>
           <input id="sessionNs" value="session:widget-demo:matt" />
           <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
@@ -79,7 +110,7 @@
         <div class="card">
           <h2>MCP integration</h2>
           <div class="row">
-            <select id="mcpProvider" style="width:100%;border:1px solid #334673;border-radius:10px;background:#0b1430;color:#eef4ff;padding:10px;">
+            <select id="mcpProvider">
               <option value="linear">Linear</option>
               <option value="notion">Notion</option>
               <option value="github">GitHub</option>
@@ -114,11 +145,31 @@
       const mcpProviderEl = document.getElementById('mcpProvider');
       const mcpStatusEl = document.getElementById('mcpStatus');
 
+      const loopEnabledEl = document.getElementById('loopEnabled');
+      const loopGoalEl = document.getElementById('loopGoal');
+      const loopMaxEl = document.getElementById('loopMax');
+      const loopStartEl = document.getElementById('loopStart');
+      const loopStopEl = document.getElementById('loopStop');
+      const loopApproveEl = document.getElementById('loopApprove');
+      const loopDenyEl = document.getElementById('loopDeny');
+      const loopFeedbackEl = document.getElementById('loopFeedback');
+      const loopMetaEl = document.getElementById('loopMeta');
+      const loopHistoryEl = document.getElementById('loopHistory');
+
       let runtimeReady = false;
       let appState = { todos: [] };
       let mcpConnected = false;
       let currentPrompt = '';
       let memoryDbPromise = null;
+
+      const loopState = {
+        running: false,
+        iteration: 0,
+        maxIterations: 8,
+        awaitingDecision: false,
+        lastDeniedFeedback: '',
+        history: []
+      };
 
       const defaultTodos = [
         { id: 1, title: 'Draft weekly priorities', status: 'planning' },
@@ -251,6 +302,24 @@
       }
 
       globalThis.__mcpSuggestTask = mcpSuggestTask;
+
+      function renderLoopHistory() {
+        loopMetaEl.textContent = loopState.running
+          ? `Loop running • iteration ${loopState.iteration}/${loopState.maxIterations}${loopState.awaitingDecision ? ' • waiting for approve/deny' : ''}`
+          : 'Loop idle.';
+
+        loopHistoryEl.innerHTML = '';
+        [...loopState.history].reverse().forEach((item) => {
+          const node = document.createElement('div');
+          node.className = 'loop-item';
+          const tag = item.decision ? `<span class="tag">${item.decision}</span>` : '<span class="tag">pending</span>';
+          node.innerHTML = `<strong>Iteration ${item.iteration}${tag}</strong><p>${item.summary || 'No summary returned.'}</p>${item.feedback ? `<p style="color:#e7bbcf;">Feedback: ${item.feedback}</p>` : ''}`;
+          loopHistoryEl.appendChild(node);
+        });
+
+        loopApproveEl.disabled = !loopState.awaitingDecision;
+        loopDenyEl.disabled = !loopState.awaitingDecision;
+      }
 
       function appSource(prompt) {
         const safePrompt = JSON.stringify(prompt);
@@ -411,46 +480,158 @@
         runtimeReady = true;
       }
 
-      async function compileAndRender() {
-        try {
-          await ensureRuntime();
-          const prompt = promptEl.value.trim() || 'Todo app widget';
-          currentPrompt = prompt;
+      async function generateAndCompile(prompt) {
+        await ensureRuntime();
+        let lastErr = null;
 
-          let lastErr = null;
-          for (let attempt = 1; attempt <= 2; attempt += 1) {
-            statusEl.textContent = attempt === 1
-              ? 'Generating widget JSON via LLM…'
-              : 'Retrying LLM generation with stricter render contract…';
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          statusEl.textContent = attempt === 1
+            ? 'Generating widget JSON via LLM…'
+            : 'Retrying LLM generation with stricter render contract…';
 
-            const generationPrompt = attempt === 1
-              ? prompt
-              : `${prompt}\n\nIMPORTANT: __pixelWidgetFactory must return a real HTMLElement (e.g. document.createElement('div')).`;
+          const generationPrompt = attempt === 1
+            ? prompt
+            : `${prompt}\n\nIMPORTANT: __pixelWidgetFactory must return a real HTMLElement (e.g. document.createElement('div')).`;
 
-            try {
-              const payload = await generateWidgetFromLLM(generationPrompt);
-              applyTheme(payload.theme || 'default');
+          try {
+            const payload = await generateWidgetFromLLM(generationPrompt);
+            applyTheme(payload.theme || 'default');
 
-              statusEl.textContent = `Compiling generated app… (attempt ${attempt}/2)`;
-              const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
-              // eslint-disable-next-line no-new-func
-              new Function(result.code)();
-              if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
+            statusEl.textContent = `Compiling generated app… (attempt ${attempt}/2)`;
+            const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
+            // eslint-disable-next-line no-new-func
+            new Function(result.code)();
+            if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
 
-              renderFromFactory(prompt);
-              statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
-              return;
-            } catch (err) {
-              lastErr = err;
-              console.warn(`LLM attempt ${attempt} failed`, err);
-            }
+            renderFromFactory(prompt);
+            statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+            return payload;
+          } catch (err) {
+            lastErr = err;
+            console.warn(`LLM attempt ${attempt} failed`, err);
           }
+        }
 
-          throw lastErr || new Error('Unknown LLM generation failure');
+        throw lastErr || new Error('Unknown LLM generation failure');
+      }
+
+      async function compileAndRender(promptOverride = null) {
+        try {
+          const prompt = (promptOverride || promptEl.value.trim() || 'Todo app widget').trim();
+          currentPrompt = prompt;
+          return await generateAndCompile(prompt);
         } catch (err) {
           console.error(err);
           statusEl.textContent = `LLM compile failed (no fallback): ${err.message || err}`;
+          return null;
         }
+      }
+
+      function buildLoopPrompt() {
+        const basePrompt = promptEl.value.trim() || 'Todo app widget';
+        const goal = loopGoalEl.value.trim() || 'Improve the design quality while preserving behavior.';
+        const last = loopState.history[loopState.history.length - 1];
+        const deniedFeedback = loopState.lastDeniedFeedback?.trim();
+
+        const parts = [
+          basePrompt,
+          `\n\nLOOP MODE CONTEXT:`,
+          `Design goal: ${goal}`,
+          `Iteration: ${loopState.iteration + 1} of ${loopState.maxIterations}`,
+          'Keep core todo behavior intact unless feedback asks otherwise.'
+        ];
+
+        if (last?.summary) {
+          parts.push(`Previous iteration summary: ${last.summary}`);
+        }
+
+        if (deniedFeedback) {
+          parts.push(`Reviewer denied prior version. Required feedback to address: ${deniedFeedback}`);
+        }
+
+        parts.push('Return production-safe DOM code and include a concise summary of what changed.');
+        return parts.join('\n');
+      }
+
+      async function runLoopIteration() {
+        if (!loopState.running) return;
+        if (loopState.iteration >= loopState.maxIterations) {
+          loopState.running = false;
+          loopState.awaitingDecision = false;
+          renderLoopHistory();
+          statusEl.textContent = 'Loop reached max iterations.';
+          return;
+        }
+
+        const loopPrompt = buildLoopPrompt();
+        const payload = await compileAndRender(loopPrompt);
+        if (!payload) {
+          loopState.running = false;
+          loopState.awaitingDecision = false;
+          renderLoopHistory();
+          return;
+        }
+
+        loopState.iteration += 1;
+        loopState.awaitingDecision = true;
+        loopState.history.push({
+          iteration: loopState.iteration,
+          summary: payload.summary || 'Design revision generated.',
+          decision: '',
+          feedback: ''
+        });
+        loopState.lastDeniedFeedback = '';
+        renderLoopHistory();
+      }
+
+      async function startLoop() {
+        if (!loopEnabledEl.checked) {
+          statusEl.textContent = 'Enable Loop mode first.';
+          return;
+        }
+
+        loopState.running = true;
+        loopState.iteration = 0;
+        loopState.maxIterations = Math.max(1, Math.min(20, Number(loopMaxEl.value || 8)));
+        loopState.awaitingDecision = false;
+        loopState.lastDeniedFeedback = '';
+        loopState.history = [];
+        renderLoopHistory();
+        await runLoopIteration();
+      }
+
+      function stopLoop() {
+        loopState.running = false;
+        loopState.awaitingDecision = false;
+        renderLoopHistory();
+        statusEl.textContent = 'Loop stopped.';
+      }
+
+      async function approveLoopIteration() {
+        if (!loopState.awaitingDecision) return;
+        const last = loopState.history[loopState.history.length - 1];
+        if (last) last.decision = 'approved';
+        loopState.awaitingDecision = false;
+        renderLoopHistory();
+        await runLoopIteration();
+      }
+
+      async function denyLoopIteration() {
+        if (!loopState.awaitingDecision) return;
+        const feedback = loopFeedbackEl.value.trim();
+        if (!feedback) {
+          statusEl.textContent = 'Add deny feedback so the next iteration has guidance.';
+          return;
+        }
+        const last = loopState.history[loopState.history.length - 1];
+        if (last) {
+          last.decision = 'denied';
+          last.feedback = feedback;
+        }
+        loopState.awaitingDecision = false;
+        loopState.lastDeniedFeedback = feedback;
+        renderLoopHistory();
+        await runLoopIteration();
       }
 
       function renderFromFactory(prompt) {
@@ -495,20 +676,31 @@
         await compileAndRender();
       }
 
-      document.getElementById('generate').addEventListener('click', () => { void compileAndRender(); });
+      document.getElementById('generate').addEventListener('click', async () => {
+        stopLoop();
+        await compileAndRender();
+      });
       document.getElementById('seed').addEventListener('click', () => { void seedTasks(); });
       document.getElementById('mcpConnect').addEventListener('click', connectMcp);
       document.getElementById('reset').addEventListener('click', async () => {
         await memoryDelete(stateKey());
         appState = { todos: structuredClone(defaultTodos) };
+        stopLoop();
         await compileAndRender();
       });
       sessionEl.addEventListener('change', async () => {
         appState = await loadState();
+        stopLoop();
         await compileAndRender();
       });
 
+      loopStartEl.addEventListener('click', () => { void startLoop(); });
+      loopStopEl.addEventListener('click', stopLoop);
+      loopApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
+      loopDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
+
       appState = await loadState();
+      renderLoopHistory();
       await compileAndRender();
     </script>
   </body>
