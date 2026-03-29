@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Claw — Prompt to Widget App</title>
+    <title>Pixel Claw — Goal to Live App</title>
     <style>
       :root {
         --bg: #060b17;
@@ -20,9 +20,24 @@
         color: var(--text);
         background: radial-gradient(900px 460px at 85% -25%, #2b1650 0%, transparent 60%), var(--bg);
       }
-      .layout { min-height: 100vh; display: grid; grid-template-columns: 360px 1fr; }
-      .left { border-right: 1px solid var(--line); background: rgba(10,16,36,.92); padding: 16px; overflow-y: auto; max-height: 100vh; }
-      .right { padding: 16px; }
+      .layout { min-height: 100vh; padding: 16px; }
+      .right { padding: 0; }
+      .left {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(420px, 94vw);
+        height: 100vh;
+        border-left: 1px solid var(--line);
+        background: rgba(10,16,36,.98);
+        padding: 16px;
+        overflow-y: auto;
+        z-index: 30;
+        box-shadow: -10px 0 32px rgba(0,0,0,.35);
+        transform: translateX(102%);
+        transition: transform .2s ease;
+      }
+      .left.open { transform: translateX(0); }
       h1 { margin: 0 0 6px; font-size: 26px; }
       h2 { margin: 0 0 8px; font-size: 13px; color: #9fc8ff; text-transform: uppercase; letter-spacing: .08em; }
       p { margin: 0; color: var(--muted); line-height: 1.45; }
@@ -56,71 +71,27 @@
       .loop-item strong { font-size: 12px; color: #b9ddff; }
       .loop-item p { margin-top: 4px; font-size: 12px; }
       .tag { display: inline-block; margin-left: 6px; border: 1px solid #3c5f8f; border-radius: 999px; padding: 1px 6px; font-size: 11px; color: #b3ddff; }
+      .overlay-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 8, 20, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease;
+        z-index: 20;
+      }
+      .overlay-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
       @media (max-width: 940px) {
-        .layout { grid-template-columns: 1fr; }
-        .left { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
+        .layout { padding: 10px; }
+        .left { width: 100vw; border-left: 0; }
       }
     </style>
   </head>
   <body>
     <main class="layout">
-      <aside class="left">
-        <h1>Goal → App</h1>
-        <p>Describe the outcome you want. Pixel Claw iterates toward that goal with approval gates.</p>
-
-        <div class="card">
-          <h2>Goal prompt</h2>
-          <textarea id="prompt">Goal: Improve onboarding conversion by making the first screen clearer and more trustworthy on mobile. Keep task flow the same.</textarea>
-          <div class="row" style="margin-top:10px;">
-            <button id="generate" class="btn">Generate app</button>
-            <button id="seed" class="btn ghost">Seed sample tasks</button>
-          </div>
-          <div class="status" id="status">Ready.</div>
-        </div>
-
-        <div class="card">
-          <h2>Design autopilot loop</h2>
-          <div class="row" style="align-items:center;">
-            <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:#c6dcff;">
-              <input id="loopEnabled" type="checkbox" style="width:auto;padding:0;" />
-              Loop mode ON
-            </label>
-            <input id="loopMax" type="number" min="1" max="20" value="8" title="Max iterations" />
-          </div>
-          <textarea id="loopGoal" style="margin-top:8px;min-height:70px;" placeholder="Design goal for loop iterations">Improve visual hierarchy, increase readability, and tighten spacing without changing core task flow.</textarea>
-          <div class="row" style="margin-top:8px;">
-            <button id="loopStart" class="btn ghost">Start loop</button>
-            <button id="loopStop" class="btn danger">Stop</button>
-          </div>
-          <textarea id="loopFeedback" style="margin-top:8px;min-height:62px;" placeholder="If denying, provide feedback here."></textarea>
-          <div class="row" style="margin-top:8px;">
-            <button id="loopApprove" class="btn">Approve + next</button>
-            <button id="loopDeny" class="btn ghost">Deny w/ feedback</button>
-          </div>
-          <div class="meta" id="loopMeta">Loop idle.</div>
-          <div id="loopHistory"></div>
-        </div>
-
-        <div class="card">
-          <h2>Session</h2>
-          <input id="sessionNs" value="session:widget-demo:matt" />
-          <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
-        </div>
-
-        <div class="card">
-          <h2>MCP integration</h2>
-          <div class="row">
-            <select id="mcpProvider">
-              <option value="linear">Linear</option>
-              <option value="notion">Notion</option>
-              <option value="github">GitHub</option>
-            </select>
-            <button id="mcpConnect" class="btn ghost">Connect</button>
-          </div>
-          <p id="mcpStatus" style="margin-top:8px;">Not connected</p>
-        </div>
-      </aside>
-
       <section class="right">
         <div class="shell">
           <div class="shell-top">
@@ -128,12 +99,78 @@
               <div class="badge">LIVE WIDGET APP</div>
               <div style="margin-top:6px;font-weight:700;">Todo Flow Demo</div>
             </div>
-            <button id="reset" class="btn ghost" style="padding:8px 10px;">Reset</button>
+            <div class="row" style="width:auto;">
+              <button id="openConfig" class="btn ghost" style="padding:8px 10px;">Config</button>
+              <button id="reset" class="btn ghost" style="padding:8px 10px;">Reset</button>
+            </div>
           </div>
           <div id="appRoot"></div>
         </div>
       </section>
     </main>
+
+    <div id="configBackdrop" class="overlay-backdrop"></div>
+    <aside id="configPanel" class="left">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div>
+          <h1 style="font-size:22px;">Goal → App</h1>
+          <p>Set goals, run loop mode, and watch the preview update live.</p>
+        </div>
+        <button id="closeConfig" class="btn ghost" style="width:auto;height:40px;">Close</button>
+      </div>
+
+      <div class="card">
+        <h2>Goal prompt</h2>
+        <textarea id="prompt">Goal: Improve onboarding conversion by making the first screen clearer and more trustworthy on mobile. Keep task flow the same.</textarea>
+        <div class="row" style="margin-top:10px;">
+          <button id="generate" class="btn">Generate app</button>
+          <button id="seed" class="btn ghost">Seed sample tasks</button>
+        </div>
+        <div class="status" id="status">Ready.</div>
+      </div>
+
+      <div class="card">
+        <h2>Design autopilot loop</h2>
+        <div class="row" style="align-items:center;">
+          <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:#c6dcff;">
+            <input id="loopEnabled" type="checkbox" style="width:auto;padding:0;" />
+            Loop mode ON
+          </label>
+          <input id="loopMax" type="number" min="1" max="20" value="8" title="Max iterations" />
+        </div>
+        <textarea id="loopGoal" style="margin-top:8px;min-height:70px;" placeholder="Design goal for loop iterations">Improve visual hierarchy, increase readability, and tighten spacing without changing core task flow.</textarea>
+        <div class="row" style="margin-top:8px;">
+          <button id="loopStart" class="btn ghost">Start loop</button>
+          <button id="loopStop" class="btn danger">Stop</button>
+        </div>
+        <textarea id="loopFeedback" style="margin-top:8px;min-height:62px;" placeholder="If denying, provide feedback here."></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button id="loopApprove" class="btn">Approve + next</button>
+          <button id="loopDeny" class="btn ghost">Deny w/ feedback</button>
+        </div>
+        <div class="meta" id="loopMeta">Loop idle.</div>
+        <div id="loopHistory"></div>
+      </div>
+
+      <div class="card">
+        <h2>Session</h2>
+        <input id="sessionNs" value="session:widget-demo:matt" />
+        <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
+      </div>
+
+      <div class="card">
+        <h2>MCP integration</h2>
+        <div class="row">
+          <select id="mcpProvider">
+            <option value="linear">Linear</option>
+            <option value="notion">Notion</option>
+            <option value="github">GitHub</option>
+          </select>
+          <button id="mcpConnect" class="btn ghost">Connect</button>
+        </div>
+        <p id="mcpStatus" style="margin-top:8px;">Not connected</p>
+      </div>
+    </aside>
 
     <script type="module">
       import * as esbuild from 'https://unpkg.com/esbuild-wasm@0.25.3/esm/browser.min.js';
@@ -144,6 +181,10 @@
       const appRoot = document.getElementById('appRoot');
       const mcpProviderEl = document.getElementById('mcpProvider');
       const mcpStatusEl = document.getElementById('mcpStatus');
+      const configPanelEl = document.getElementById('configPanel');
+      const configBackdropEl = document.getElementById('configBackdrop');
+      const openConfigEl = document.getElementById('openConfig');
+      const closeConfigEl = document.getElementById('closeConfig');
 
       const loopEnabledEl = document.getElementById('loopEnabled');
       const loopGoalEl = document.getElementById('loopGoal');
@@ -257,6 +298,16 @@
         root.style.setProperty('--text', '#eef4ff');
         root.style.setProperty('--muted', '#aebce0');
         root.style.setProperty('--cyan', '#5be5ff');
+      }
+
+      function openConfigPanel() {
+        configPanelEl.classList.add('open');
+        configBackdropEl.classList.add('open');
+      }
+
+      function closeConfigPanel() {
+        configPanelEl.classList.remove('open');
+        configBackdropEl.classList.remove('open');
       }
 
       async function generateWidgetFromLLM(prompt) {
@@ -679,6 +730,12 @@
       document.getElementById('generate').addEventListener('click', async () => {
         stopLoop();
         await compileAndRender();
+      });
+      openConfigEl.addEventListener('click', openConfigPanel);
+      closeConfigEl.addEventListener('click', closeConfigPanel);
+      configBackdropEl.addEventListener('click', closeConfigPanel);
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeConfigPanel();
       });
       document.getElementById('seed').addEventListener('click', () => { void seedTasks(); });
       document.getElementById('mcpConnect').addEventListener('click', connectMcp);
