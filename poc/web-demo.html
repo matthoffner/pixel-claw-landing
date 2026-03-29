@@ -84,6 +84,53 @@
         opacity: 1;
         pointer-events: auto;
       }
+      .setup-overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: rgba(2, 8, 20, 0.58);
+        backdrop-filter: blur(8px);
+        z-index: 40;
+      }
+      .setup-overlay.hidden { display: none; }
+      .setup-card {
+        width: min(760px, 96vw);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(11, 20, 48, 0.96);
+        padding: 16px;
+      }
+      .bottom-status {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(9, 17, 40, 0.82);
+        backdrop-filter: blur(10px);
+        color: #cce4ff;
+        padding: 10px 12px;
+        z-index: 25;
+      }
+      .decision-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 48vh;
+        min-height: 260px;
+        border-top: 1px solid var(--line);
+        background: rgba(9, 17, 40, 0.72);
+        backdrop-filter: blur(16px);
+        padding: 14px;
+        z-index: 35;
+        transform: translateY(102%);
+        transition: transform .22s ease;
+      }
+      .decision-sheet.open { transform: translateY(0); }
       @media (max-width: 940px) {
         .layout { padding: 10px; }
         .left { width: 100vw; border-left: 0; }
@@ -172,6 +219,38 @@
       </div>
     </aside>
 
+    <div id="setupOverlay" class="setup-overlay">
+      <div class="setup-card">
+        <h1 style="font-size:24px; margin-bottom:6px;">Set your goal</h1>
+        <p style="margin-bottom:10px;">Start from a desired outcome, then watch the app iterate live.</p>
+        <textarea id="setupPrompt" style="min-height:98px;">Goal: Improve onboarding conversion by making the first screen clearer and more trustworthy on mobile. Keep task flow the same.</textarea>
+        <div class="row" style="margin-top:10px; align-items:center;">
+          <label style="display:flex;gap:8px;align-items:center;color:#c9deff;">
+            <input id="setupAutoMode" type="checkbox" checked style="width:auto;padding:0;" />
+            Auto mode ON
+          </label>
+          <input id="setupMaxIterations" type="number" min="1" max="20" value="8" title="Max iterations" />
+          <button id="setupStart" class="btn">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bottomStatus" class="bottom-status">Status: Ready.</div>
+
+    <div id="decisionSheet" class="decision-sheet">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+        <strong id="decisionTitle">Revision ready for review</strong>
+        <span id="decisionIteration" class="tag">Iteration</span>
+      </div>
+      <p id="decisionSummary" style="margin-top:8px;">Review this revision and approve or deny with feedback.</p>
+      <textarea id="decisionFeedback" style="margin-top:10px;min-height:90px;" placeholder="If denying, explain what to change next."></textarea>
+      <div class="row" style="margin-top:10px;">
+        <button id="decisionApprove" class="btn">Approve + next</button>
+        <button id="decisionDeny" class="btn ghost">Deny w/ feedback</button>
+        <button id="decisionStop" class="btn danger">Stop loop</button>
+      </div>
+    </div>
+
     <script type="module">
       import * as esbuild from 'https://unpkg.com/esbuild-wasm@0.25.3/esm/browser.min.js';
 
@@ -196,6 +275,20 @@
       const loopFeedbackEl = document.getElementById('loopFeedback');
       const loopMetaEl = document.getElementById('loopMeta');
       const loopHistoryEl = document.getElementById('loopHistory');
+
+      const setupOverlayEl = document.getElementById('setupOverlay');
+      const setupPromptEl = document.getElementById('setupPrompt');
+      const setupAutoModeEl = document.getElementById('setupAutoMode');
+      const setupMaxIterationsEl = document.getElementById('setupMaxIterations');
+      const setupStartEl = document.getElementById('setupStart');
+      const bottomStatusEl = document.getElementById('bottomStatus');
+      const decisionSheetEl = document.getElementById('decisionSheet');
+      const decisionSummaryEl = document.getElementById('decisionSummary');
+      const decisionIterationEl = document.getElementById('decisionIteration');
+      const decisionFeedbackEl = document.getElementById('decisionFeedback');
+      const decisionApproveEl = document.getElementById('decisionApprove');
+      const decisionDenyEl = document.getElementById('decisionDeny');
+      const decisionStopEl = document.getElementById('decisionStop');
 
       let runtimeReady = false;
       let appState = { todos: [] };
@@ -310,6 +403,22 @@
         configBackdropEl.classList.remove('open');
       }
 
+      function setBottomStatus(text) {
+        bottomStatusEl.textContent = `Status: ${text}`;
+      }
+
+      function openDecisionSheet(summary = '') {
+        const current = loopState.iteration;
+        decisionIterationEl.textContent = `Iteration ${current}/${loopState.maxIterations}`;
+        decisionSummaryEl.textContent = summary || 'Revision ready for review.';
+        decisionFeedbackEl.value = '';
+        decisionSheetEl.classList.add('open');
+      }
+
+      function closeDecisionSheet() {
+        decisionSheetEl.classList.remove('open');
+      }
+
       async function generateWidgetFromLLM(prompt) {
         const res = await fetch('/api/generate-widget', {
           method: 'POST',
@@ -370,6 +479,8 @@
 
         loopApproveEl.disabled = !loopState.awaitingDecision;
         loopDenyEl.disabled = !loopState.awaitingDecision;
+        decisionApproveEl.disabled = !loopState.awaitingDecision;
+        decisionDenyEl.disabled = !loopState.awaitingDecision;
       }
 
       function appSource(prompt) {
@@ -527,6 +638,7 @@
       async function ensureRuntime() {
         if (runtimeReady) return;
         statusEl.textContent = 'Initializing in-browser compiler…';
+        setBottomStatus('Initializing in-browser compiler…');
         await esbuild.initialize({ wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.3/esbuild.wasm' });
         runtimeReady = true;
       }
@@ -539,6 +651,7 @@
           statusEl.textContent = attempt === 1
             ? 'Generating widget JSON via LLM…'
             : 'Retrying LLM generation with stricter render contract…';
+          setBottomStatus(statusEl.textContent);
 
           const generationPrompt = attempt === 1
             ? prompt
@@ -549,6 +662,7 @@
             applyTheme(payload.theme || 'default');
 
             statusEl.textContent = `Compiling generated app… (attempt ${attempt}/2)`;
+            setBottomStatus(statusEl.textContent);
             const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
             // eslint-disable-next-line no-new-func
             new Function(result.code)();
@@ -556,6 +670,7 @@
 
             renderFromFactory(prompt);
             statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+            setBottomStatus(statusEl.textContent);
             return payload;
           } catch (err) {
             lastErr = err;
@@ -574,6 +689,7 @@
         } catch (err) {
           console.error(err);
           statusEl.textContent = `LLM compile failed (no fallback): ${err.message || err}`;
+          setBottomStatus(statusEl.textContent);
           return null;
         }
       }
@@ -609,16 +725,20 @@
         if (loopState.iteration >= loopState.maxIterations) {
           loopState.running = false;
           loopState.awaitingDecision = false;
+          closeDecisionSheet();
           renderLoopHistory();
           statusEl.textContent = 'Loop reached max iterations.';
+          setBottomStatus(statusEl.textContent);
           return;
         }
 
+        setBottomStatus(`Loop running iteration ${loopState.iteration + 1}/${loopState.maxIterations}…`);
         const loopPrompt = buildLoopPrompt();
         const payload = await compileAndRender(loopPrompt);
         if (!payload) {
           loopState.running = false;
           loopState.awaitingDecision = false;
+          closeDecisionSheet();
           renderLoopHistory();
           return;
         }
@@ -633,14 +753,30 @@
         });
         loopState.lastDeniedFeedback = '';
         renderLoopHistory();
+
+        if (setupAutoModeEl.checked) {
+          const last = loopState.history[loopState.history.length - 1];
+          if (last) last.decision = 'auto-approved';
+          loopState.awaitingDecision = false;
+          renderLoopHistory();
+          setBottomStatus(`Auto-approved iteration ${loopState.iteration}. Continuing…`);
+          await new Promise((resolve) => setTimeout(resolve, 350));
+          await runLoopIteration();
+          return;
+        }
+
+        setBottomStatus(`Revision ${loopState.iteration} ready for review.`);
+        openDecisionSheet(payload.summary || 'Revision ready for review.');
       }
 
       async function startLoop() {
         if (!loopEnabledEl.checked) {
           statusEl.textContent = 'Enable Loop mode first.';
+          setBottomStatus(statusEl.textContent);
           return;
         }
 
+        closeDecisionSheet();
         loopState.running = true;
         loopState.iteration = 0;
         loopState.maxIterations = Math.max(1, Math.min(20, Number(loopMaxEl.value || 8)));
@@ -648,14 +784,17 @@
         loopState.lastDeniedFeedback = '';
         loopState.history = [];
         renderLoopHistory();
+        setBottomStatus(`Loop started (${setupAutoModeEl.checked ? 'auto mode ON' : 'manual review'}).`);
         await runLoopIteration();
       }
 
       function stopLoop() {
         loopState.running = false;
         loopState.awaitingDecision = false;
+        closeDecisionSheet();
         renderLoopHistory();
         statusEl.textContent = 'Loop stopped.';
+        setBottomStatus(statusEl.textContent);
       }
 
       async function approveLoopIteration() {
@@ -663,15 +802,18 @@
         const last = loopState.history[loopState.history.length - 1];
         if (last) last.decision = 'approved';
         loopState.awaitingDecision = false;
+        closeDecisionSheet();
+        setBottomStatus(`Approved iteration ${loopState.iteration}. Generating next…`);
         renderLoopHistory();
         await runLoopIteration();
       }
 
       async function denyLoopIteration() {
         if (!loopState.awaitingDecision) return;
-        const feedback = loopFeedbackEl.value.trim();
+        const feedback = (decisionFeedbackEl.value.trim() || loopFeedbackEl.value.trim());
         if (!feedback) {
           statusEl.textContent = 'Add deny feedback so the next iteration has guidance.';
+          setBottomStatus(statusEl.textContent);
           return;
         }
         const last = loopState.history[loopState.history.length - 1];
@@ -681,6 +823,8 @@
         }
         loopState.awaitingDecision = false;
         loopState.lastDeniedFeedback = feedback;
+        closeDecisionSheet();
+        setBottomStatus(`Denied iteration ${loopState.iteration}. Applying feedback…`);
         renderLoopHistory();
         await runLoopIteration();
       }
@@ -756,9 +900,34 @@
       loopApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
       loopDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
 
+      decisionApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
+      decisionDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
+      decisionStopEl.addEventListener('click', stopLoop);
+
+      setupStartEl.addEventListener('click', async () => {
+        const startPrompt = setupPromptEl.value.trim();
+        if (startPrompt) {
+          promptEl.value = startPrompt;
+          loopGoalEl.value = startPrompt;
+        }
+
+        loopMaxEl.value = String(Math.max(1, Math.min(20, Number(setupMaxIterationsEl.value || 8))));
+        loopEnabledEl.checked = true;
+
+        setupOverlayEl.classList.add('hidden');
+        closeConfigPanel();
+
+        if (setupAutoModeEl.checked || loopEnabledEl.checked) {
+          await startLoop();
+        } else {
+          await compileAndRender();
+        }
+      });
+
       appState = await loadState();
       renderLoopHistory();
       await compileAndRender();
+      setBottomStatus('Ready. Set your goal to start.');
     </script>
   </body>
 </html>
