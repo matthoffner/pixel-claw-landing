@@ -360,18 +360,36 @@
           await ensureRuntime();
           const prompt = promptEl.value.trim() || 'Todo app widget';
 
-          statusEl.textContent = 'Generating widget JSON via LLM…';
-          const payload = await generateWidgetFromLLM(prompt);
-          applyTheme(payload.theme || 'default');
+          let lastErr = null;
+          for (let attempt = 1; attempt <= 2; attempt += 1) {
+            statusEl.textContent = attempt === 1
+              ? 'Generating widget JSON via LLM…'
+              : 'Retrying LLM generation with stricter render contract…';
 
-          statusEl.textContent = 'Compiling generated app…';
-          const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
-          // eslint-disable-next-line no-new-func
-          new Function(result.code)();
-          if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
+            const generationPrompt = attempt === 1
+              ? prompt
+              : `${prompt}\n\nIMPORTANT: __pixelWidgetFactory must return a real HTMLElement (e.g. document.createElement('div')).`;
 
-          renderFromFactory(prompt);
-          statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+            try {
+              const payload = await generateWidgetFromLLM(generationPrompt);
+              applyTheme(payload.theme || 'default');
+
+              statusEl.textContent = `Compiling generated app… (attempt ${attempt}/2)`;
+              const result = await esbuild.transform(payload.sourceCode, { loader: 'ts', target: 'es2020', format: 'iife' });
+              // eslint-disable-next-line no-new-func
+              new Function(result.code)();
+              if (!globalThis.__pixelWidgetFactory) throw new Error('Generated code did not set __pixelWidgetFactory');
+
+              renderFromFactory(prompt);
+              statusEl.textContent = 'Done. LLM JSON generated code and compiled in browser.';
+              return;
+            } catch (err) {
+              lastErr = err;
+              console.warn(`LLM attempt ${attempt} failed`, err);
+            }
+          }
+
+          throw lastErr || new Error('Unknown LLM generation failure');
         } catch (err) {
           console.error(err);
           statusEl.textContent = `LLM compile failed (no fallback): ${err.message || err}`;
@@ -380,7 +398,7 @@
 
       function renderFromFactory(prompt) {
         const factory = globalThis.__pixelWidgetFactory;
-        if (!factory) return;
+        if (!factory) throw new Error('Missing __pixelWidgetFactory at render time');
 
         const setState = (next) => {
           appState = next;
@@ -390,6 +408,7 @@
 
         appRoot.innerHTML = '';
         const node = factory({ state: appState, setState, prompt });
+        if (!(node instanceof Node)) throw new Error('Generated factory did not return a DOM Node');
         appRoot.appendChild(node);
       }
 
