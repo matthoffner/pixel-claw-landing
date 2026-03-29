@@ -131,6 +131,24 @@
         transition: transform .22s ease;
       }
       .decision-sheet.open { transform: translateY(0); }
+      .loop-controls-overlay {
+        position: fixed;
+        top: 74px;
+        right: 18px;
+        z-index: 28;
+        display: flex;
+        gap: 8px;
+      }
+      .loop-pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(9, 17, 40, 0.78);
+        backdrop-filter: blur(10px);
+        color: #d8ecff;
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      .loop-pill.hidden { display: none; }
       @media (max-width: 940px) {
         .layout { padding: 10px; }
         .left { width: 100vw; border-left: 0; }
@@ -147,6 +165,7 @@
               <div style="margin-top:6px;font-weight:700;">Todo Flow Demo</div>
             </div>
             <div class="row" style="width:auto;">
+              <button id="autoToggle" class="btn ghost" style="padding:8px 10px;">Auto: ON</button>
               <button id="openConfig" class="btn ghost" style="padding:8px 10px;">Config</button>
               <button id="reset" class="btn ghost" style="padding:8px 10px;">Reset</button>
             </div>
@@ -237,6 +256,11 @@
 
     <div id="bottomStatus" class="bottom-status">Status: Ready.</div>
 
+    <div class="loop-controls-overlay">
+      <button id="loopPauseResume" class="loop-pill hidden">⏸ Pause loop</button>
+      <div id="loopLiveChip" class="loop-pill hidden">Loop idle</div>
+    </div>
+
     <div id="decisionSheet" class="decision-sheet">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
         <strong id="decisionTitle">Revision ready for review</strong>
@@ -264,6 +288,7 @@
       const configBackdropEl = document.getElementById('configBackdrop');
       const openConfigEl = document.getElementById('openConfig');
       const closeConfigEl = document.getElementById('closeConfig');
+      const autoToggleEl = document.getElementById('autoToggle');
 
       const loopEnabledEl = document.getElementById('loopEnabled');
       const loopGoalEl = document.getElementById('loopGoal');
@@ -289,6 +314,8 @@
       const decisionApproveEl = document.getElementById('decisionApprove');
       const decisionDenyEl = document.getElementById('decisionDeny');
       const decisionStopEl = document.getElementById('decisionStop');
+      const loopPauseResumeEl = document.getElementById('loopPauseResume');
+      const loopLiveChipEl = document.getElementById('loopLiveChip');
 
       let runtimeReady = false;
       let runtimeInitPromise = null;
@@ -299,6 +326,7 @@
 
       const loopState = {
         running: false,
+        paused: false,
         iteration: 0,
         maxIterations: 8,
         awaitingDecision: false,
@@ -408,6 +436,35 @@
         bottomStatusEl.textContent = `Status: ${text}`;
       }
 
+      function syncAutoButtons() {
+        const autoOn = !!setupAutoModeEl.checked;
+        autoToggleEl.textContent = autoOn ? 'Auto: ON' : 'Auto: OFF';
+      }
+
+      function syncLoopOverlay() {
+        const runningLike = loopState.running || loopState.awaitingDecision;
+        loopPauseResumeEl.classList.toggle('hidden', !runningLike);
+        loopLiveChipEl.classList.toggle('hidden', !runningLike);
+
+        if (!runningLike) {
+          loopLiveChipEl.textContent = 'Loop idle';
+          loopPauseResumeEl.textContent = '⏸ Pause loop';
+          loopPauseResumeEl.disabled = false;
+          return;
+        }
+
+        if (loopState.paused) {
+          loopLiveChipEl.textContent = `Paused at ${loopState.iteration}/${loopState.maxIterations}`;
+          loopPauseResumeEl.textContent = '▶ Resume loop';
+        } else if (loopState.awaitingDecision) {
+          loopLiveChipEl.textContent = `Awaiting decision ${loopState.iteration}/${loopState.maxIterations}`;
+          loopPauseResumeEl.textContent = '⏸ Pause loop';
+        } else {
+          loopLiveChipEl.textContent = `Running ${loopState.iteration + 1}/${loopState.maxIterations}`;
+          loopPauseResumeEl.textContent = '⏸ Pause loop';
+        }
+      }
+
       function openDecisionSheet(summary = '') {
         const current = loopState.iteration;
         decisionIterationEl.textContent = `Iteration ${current}/${loopState.maxIterations}`;
@@ -466,7 +523,7 @@
 
       function renderLoopHistory() {
         loopMetaEl.textContent = loopState.running
-          ? `Loop running • iteration ${loopState.iteration}/${loopState.maxIterations}${loopState.awaitingDecision ? ' • waiting for approve/deny' : ''}`
+          ? `Loop ${loopState.paused ? 'paused' : 'running'} • iteration ${loopState.iteration}/${loopState.maxIterations}${loopState.awaitingDecision ? ' • waiting for approve/deny' : ''}`
           : 'Loop idle.';
 
         loopHistoryEl.innerHTML = '';
@@ -482,6 +539,7 @@
         loopDenyEl.disabled = !loopState.awaitingDecision;
         decisionApproveEl.disabled = !loopState.awaitingDecision;
         decisionDenyEl.disabled = !loopState.awaitingDecision;
+        syncLoopOverlay();
       }
 
       function appSource(prompt) {
@@ -734,9 +792,10 @@
       }
 
       async function runLoopIteration() {
-        if (!loopState.running) return;
+        if (!loopState.running || loopState.paused) return;
         if (loopState.iteration >= loopState.maxIterations) {
           loopState.running = false;
+          loopState.paused = false;
           loopState.awaitingDecision = false;
           closeDecisionSheet();
           renderLoopHistory();
@@ -750,6 +809,7 @@
         const payload = await compileAndRender(loopPrompt);
         if (!payload) {
           loopState.running = false;
+          loopState.paused = false;
           loopState.awaitingDecision = false;
           closeDecisionSheet();
           renderLoopHistory();
@@ -774,7 +834,7 @@
           renderLoopHistory();
           setBottomStatus(`Auto-approved iteration ${loopState.iteration}. Continuing…`);
           await new Promise((resolve) => setTimeout(resolve, 350));
-          await runLoopIteration();
+          if (!loopState.paused) await runLoopIteration();
           return;
         }
 
@@ -791,6 +851,7 @@
 
         closeDecisionSheet();
         loopState.running = true;
+        loopState.paused = false;
         loopState.iteration = 0;
         loopState.maxIterations = Math.max(1, Math.min(20, Number(loopMaxEl.value || 8)));
         loopState.awaitingDecision = false;
@@ -803,11 +864,28 @@
 
       function stopLoop() {
         loopState.running = false;
+        loopState.paused = false;
         loopState.awaitingDecision = false;
         closeDecisionSheet();
         renderLoopHistory();
         statusEl.textContent = 'Loop stopped.';
         setBottomStatus(statusEl.textContent);
+      }
+
+      async function togglePauseResumeLoop() {
+        if (!loopState.running && !loopState.awaitingDecision) return;
+        loopState.paused = !loopState.paused;
+        renderLoopHistory();
+
+        if (loopState.paused) {
+          setBottomStatus(`Loop paused at iteration ${loopState.iteration}/${loopState.maxIterations}.`);
+          return;
+        }
+
+        setBottomStatus('Loop resumed.');
+        if (loopState.running && !loopState.awaitingDecision) {
+          await runLoopIteration();
+        }
       }
 
       async function approveLoopIteration() {
@@ -912,6 +990,14 @@
       loopStopEl.addEventListener('click', stopLoop);
       loopApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
       loopDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
+      loopPauseResumeEl.addEventListener('click', () => { void togglePauseResumeLoop(); });
+
+      autoToggleEl.addEventListener('click', () => {
+        setupAutoModeEl.checked = !setupAutoModeEl.checked;
+        syncAutoButtons();
+        setBottomStatus(`Auto mode ${setupAutoModeEl.checked ? 'enabled' : 'disabled'}.`);
+      });
+      setupAutoModeEl.addEventListener('change', syncAutoButtons);
 
       decisionApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
       decisionDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
@@ -938,6 +1024,7 @@
       });
 
       appState = await loadState();
+      syncAutoButtons();
       renderLoopHistory();
       await compileAndRender();
       setBottomStatus('Ready. Set your goal to start.');
