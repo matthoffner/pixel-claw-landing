@@ -133,25 +133,34 @@
       .decision-sheet.open { transform: translateY(0); }
       .loop-controls-overlay {
         position: fixed;
-        top: 74px;
-        right: 18px;
-        z-index: 28;
+        right: 14px;
+        bottom: calc(14px + env(safe-area-inset-bottom) + 42px);
+        z-index: 40;
         display: flex;
         gap: 8px;
+        align-items: center;
       }
       .loop-pill {
         border: 1px solid var(--line);
         border-radius: 999px;
-        background: rgba(9, 17, 40, 0.78);
+        background: rgba(9, 17, 40, 0.84);
         backdrop-filter: blur(10px);
         color: #d8ecff;
         padding: 8px 12px;
         font-size: 12px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.34);
       }
       .loop-pill.hidden { display: none; }
       @media (max-width: 940px) {
         .layout { padding: 10px; }
         .left { width: 100vw; border-left: 0; }
+        .loop-controls-overlay {
+          left: 10px;
+          right: 10px;
+          bottom: calc(10px + env(safe-area-inset-bottom) + 46px);
+          justify-content: space-between;
+        }
+        .loop-pill { font-size: 11px; padding: 7px 10px; }
       }
     </style>
   </head>
