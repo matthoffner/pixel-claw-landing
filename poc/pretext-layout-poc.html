@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Claw — Pretext Layout POC</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0a0d14;
+      color: #e8ecff;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .muted { color: #9aa3c7; }
+    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; margin-top: 16px; }
+    .card { background: #111728; border: 1px solid #25304f; border-radius: 12px; padding: 14px; }
+    label { display: block; font-size: 13px; color: #b7c1e8; margin: 10px 0 6px; }
+    textarea, input, select {
+      width: 100%; box-sizing: border-box; border: 1px solid #33426a; border-radius: 10px;
+      background: #0b1020; color: #edf2ff; padding: 10px;
+    }
+    textarea { min-height: 160px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+    .pill { background:#0b1020; border:1px solid #2a375b; border-radius:10px; padding:10px; }
+    .pill b { display:block; font-size:18px; margin-bottom:4px; }
+    .demo-col { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .box { background:#0b1020; border:1px solid #2a375b; border-radius: 10px; padding: 10px; }
+    .canvas-wrap { overflow:auto; }
+    canvas { display:block; background:#0f1426; border:1px dashed #31406a; border-radius:8px; }
+    #status { margin-top: 8px; font-size: 13px; }
+    .ok { color: #60e5a8; }
+    .err { color: #ff8f8f; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pretext Layout POC</h1>
+    <div class="muted">Testing <code>@chenglou/pretext</code> for faster text layout in Pixel Claw cards (less reflow + tighter CTA blocks).</div>
+
+    <div class="grid">
+      <section class="card">
+        <label for="copy">Landing copy / prompt card content</label>
+        <textarea id="copy">Ship a buyer-ready POC this week: generate a vertical SaaS onboarding flow, summarize friction points from 6 user interviews, and produce 3 CTA variants with confidence scores.
+
+Goal: reduce time-to-first-demo from 3 days to 30 minutes while preserving design quality across long multilingual strings مثل هذا المثال and emoji 🚀.</textarea>
+
+        <div class="row">
+          <div>
+            <label for="width">Card width (px)</label>
+            <input id="width" type="number" min="180" max="900" value="320" />
+          </div>
+          <div>
+            <label for="lineHeight">Line height (px)</label>
+            <input id="lineHeight" type="number" min="14" max="48" value="24" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="font">Font shorthand</label>
+            <input id="font" value="16px Inter" />
+          </div>
+          <div>
+            <label for="whiteSpace">white-space mode</label>
+            <select id="whiteSpace">
+              <option value="normal" selected>normal</option>
+              <option value="pre-wrap">pre-wrap</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="runs">Benchmark loops</label>
+        <input id="runs" type="number" min="1" max="2000" value="300" />
+        <div id="status" class="muted">Loading Pretext module…</div>
+      </section>
+
+      <section class="card">
+        <div class="kpi">
+          <div class="pill"><b id="kpiHeight">-</b><span class="muted">Pretext height</span></div>
+          <div class="pill"><b id="kpiLines">-</b><span class="muted">Line count</span></div>
+          <div class="pill"><b id="kpiPretextMs">-</b><span class="muted">Pretext xN (ms)</span></div>
+          <div class="pill"><b id="kpiDomMs">-</b><span class="muted">DOM xN (ms)</span></div>
+        </div>
+
+        <div class="demo-col">
+          <div class="box">
+            <div class="muted" style="margin-bottom:8px">Pretext line output</div>
+            <ol id="lineList"></ol>
+          </div>
+          <div class="box canvas-wrap">
+            <div class="muted" style="margin-bottom:8px">Canvas render preview</div>
+            <canvas id="canvas" width="380" height="280"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const statusEl = document.getElementById('status');
+
+    const copyEl = document.getElementById('copy');
+    const widthEl = document.getElementById('width');
+    const lineHeightEl = document.getElementById('lineHeight');
+    const fontEl = document.getElementById('font');
+    const whiteSpaceEl = document.getElementById('whiteSpace');
+    const runsEl = document.getElementById('runs');
+
+    const kpiHeight = document.getElementById('kpiHeight');
+    const kpiLines = document.getElementById('kpiLines');
+    const kpiPretextMs = document.getElementById('kpiPretextMs');
+    const kpiDomMs = document.getElementById('kpiDomMs');
+    const lineList = document.getElementById('lineList');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let api;
+
+    function setStatus(msg, ok = true) {
+      statusEl.className = ok ? 'ok' : 'err';
+      statusEl.textContent = msg;
+    }
+
+    function bench(fn, loops) {
+      const t0 = performance.now();
+      for (let i = 0; i < loops; i++) fn();
+      return performance.now() - t0;
+    }
+
+    function renderCanvas(lines, width, lineHeight, font) {
+      const h = Math.max(120, lines.length * lineHeight + 24);
+      canvas.width = Math.max(240, width + 32);
+      canvas.height = h;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f1426';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#3a4a78';
+      ctx.strokeRect(16, 12, width, h - 24);
+      ctx.font = font;
+      ctx.fillStyle = '#edf2ff';
+
+      lines.forEach((line, i) => {
+        ctx.fillText(line.text, 20, 30 + i * lineHeight);
+      });
+    }
+
+    function run() {
+      if (!api) return;
+      const text = copyEl.value;
+      const width = Number(widthEl.value) || 320;
+      const lineHeight = Number(lineHeightEl.value) || 24;
+      const font = fontEl.value.trim() || '16px Inter';
+      const whiteSpace = whiteSpaceEl.value;
+      const loops = Math.max(1, Math.min(2000, Number(runsEl.value) || 300));
+
+      const prepared = api.prepare(text, font, { whiteSpace });
+      const preparedRich = api.prepareWithSegments(text, font, { whiteSpace });
+      const layoutResult = api.layout(prepared, width, lineHeight);
+      const withLines = api.layoutWithLines(preparedRich, width, lineHeight);
+
+      kpiHeight.textContent = `${layoutResult.height.toFixed(1)}px`;
+      kpiLines.textContent = `${layoutResult.lineCount}`;
+
+      const pretextMs = bench(() => api.layout(prepared, width, lineHeight), loops);
+      kpiPretextMs.textContent = `${pretextMs.toFixed(2)}`;
+
+      const scratch = document.createElement('div');
+      scratch.style.position = 'absolute';
+      scratch.style.left = '-99999px';
+      scratch.style.top = '-99999px';
+      scratch.style.width = `${width}px`;
+      scratch.style.lineHeight = `${lineHeight}px`;
+      scratch.style.font = font;
+      scratch.style.whiteSpace = whiteSpace;
+      scratch.style.visibility = 'hidden';
+      document.body.appendChild(scratch);
+      const domMs = bench(() => {
+        scratch.textContent = text;
+        // force layout read
+        void scratch.getBoundingClientRect().height;
+      }, loops);
+      scratch.remove();
+      kpiDomMs.textContent = `${domMs.toFixed(2)}`;
+
+      lineList.innerHTML = '';
+      withLines.lines.forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = `${line.text}  (${line.width.toFixed(1)}px)`;
+        lineList.appendChild(li);
+      });
+
+      renderCanvas(withLines.lines, width, lineHeight, font);
+      setStatus(`Loaded + measured. Pretext vs DOM over ${loops} loops.`);
+    }
+
+    async function init() {
+      try {
+        api = await import('https://esm.sh/@chenglou/pretext@0.0.4');
+        setStatus('Pretext loaded. Tweaking controls reruns layout benchmark.');
+        [copyEl, widthEl, lineHeightEl, fontEl, whiteSpaceEl, runsEl].forEach((el) => {
+          el.addEventListener('input', run);
+          el.addEventListener('change', run);
+        });
+        run();
+      } catch (err) {
+        console.error(err);
+        setStatus(`Failed to load pretext: ${err?.message || err}`, false);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
