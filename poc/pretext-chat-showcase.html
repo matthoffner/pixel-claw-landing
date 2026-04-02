@@ -3,170 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pixel Claw — Pretext Chat Showcase</title>
+  <title>Pixel Claw — Pretext Functional Chat Showcase</title>
   <style>
     :root { color-scheme: dark; }
-    body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #0a0e17; color: #eaf0ff; }
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 22px; }
+    body { margin: 0; background: #0a0f19; color: #ebf1ff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
     h1 { margin: 0 0 6px; font-size: 28px; }
-    .muted { color: #9ca8c9; }
-    .controls, .card { background: #11192a; border: 1px solid #243457; border-radius: 12px; padding: 14px; }
-    .controls { margin-top: 14px; display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 10px; align-items: end; }
-    label { font-size: 13px; color: #b9c6ea; display: block; margin-bottom: 6px; }
-    textarea, input, select, button { width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid #344876; background: #0c1324; color: #edf2ff; padding: 10px; }
-    textarea { min-height: 80px; resize: vertical; }
-    button { width: auto; cursor: pointer; font-weight: 600; background: #2457ff; border-color: #2457ff; }
-    .stats { margin-top: 10px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
-    .pill { background:#0c1324; border:1px solid #2b3f6a; border-radius:10px; padding:10px; }
+    .muted { color: #9eabcf; }
+    .card { background: #10192d; border: 1px solid #273a62; border-radius: 12px; padding: 12px; margin-top: 12px; }
+    .top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: end; }
+    label { display:block; font-size: 12px; color: #b7c5eb; margin-bottom: 6px; }
+    select, input, button, textarea { width:100%; box-sizing:border-box; border-radius:10px; border:1px solid #334b7a; background:#0b1324; color:#eef3ff; padding:10px; }
+    button { cursor:pointer; font-weight:600; background:#2557ff; border-color:#2557ff; }
+    .kpis { display:grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap:8px; margin-top:10px; }
+    .pill { background:#0b1324; border:1px solid #2f436f; border-radius:10px; padding:10px; }
     .pill b { display:block; font-size:18px; }
-    .grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .title { font-weight: 700; margin-bottom: 8px; }
-    .chat { height: 460px; overflow: auto; background: #0b1120; border: 1px solid #273861; border-radius: 10px; padding: 10px; }
-    .msg { max-width: 82%; margin: 8px 0; padding: 10px 12px; border-radius: 14px; line-height: 1.45; white-space: normal; overflow-wrap: break-word; }
-    .assistant { background: #1a2742; border: 1px solid #31497b; }
-    .user { background: #1b3c2f; border: 1px solid #2f6b56; margin-left: auto; }
-    code { color: #8cd0ff; }
+    .chat { height: 500px; overflow:auto; background:#0b1221; border:1px solid #2b406c; border-radius:10px; padding:10px; margin-top:10px; }
+    .msg { max-width: 360px; padding: 10px 12px; border-radius: 14px; line-height: 1.45; margin: 8px 0; white-space: pre-wrap; overflow-wrap: break-word; }
+    .user { margin-left:auto; background:#183a2f; border:1px solid #2f6a56; }
+    .assistant { background:#1a2743; border:1px solid #324c80; }
+    .composer { display:grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
+    .status { font-size: 13px; margin-top: 8px; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Pretext Chat Showcase</h1>
-    <div class="muted">Separate demo for Pixel Claw: compare normal DOM chat rendering vs Pretext pre-sized bubbles during streaming updates.</div>
+    <h1>Pretext Functional Chat Showcase</h1>
+    <div class="muted">Real chat interaction + streamed assistant response. Toggle baseline vs Pretext to see the stability difference.</div>
 
-    <div class="controls">
-      <div>
-        <label for="text">Assistant message to stream</label>
-        <textarea id="text">Great — I generated 3 launch variants for your onboarding card. Variant B usually converts best because it leads with proof first, then asks for setup. Also validated multilingual overflow for مرحبا and emoji 🚀 without clipping.</textarea>
+    <section class="card">
+      <div class="top">
+        <div>
+          <label for="mode">Render mode</label>
+          <select id="mode">
+            <option value="dom">Baseline DOM (no pre-size)</option>
+            <option value="pretext" selected>Pretext pre-size (recommended)</option>
+          </select>
+        </div>
+        <div>
+          <label for="font">Font</label>
+          <input id="font" value="16px Inter" />
+        </div>
+        <div>
+          <label for="lineHeight">Line Height (px)</label>
+          <input id="lineHeight" type="number" min="18" max="40" value="24" />
+        </div>
       </div>
-      <div>
-        <label for="font">Font</label>
-        <input id="font" value="16px Inter" />
-      </div>
-      <div>
-        <label for="lineHeight">Line Height (px)</label>
-        <input id="lineHeight" type="number" min="18" max="42" value="24" />
-      </div>
-      <div>
-        <button id="run">Run showcase</button>
-      </div>
-    </div>
 
-    <div class="stats">
-      <div class="pill"><b id="domJank">-</b><span class="muted">DOM cumulative shift px</span></div>
-      <div class="pill"><b id="pretextJank">-</b><span class="muted">Pretext cumulative shift px</span></div>
-      <div class="pill"><b id="domMs">-</b><span class="muted">DOM total render ms</span></div>
-      <div class="pill"><b id="pretextMs">-</b><span class="muted">Pretext total render ms</span></div>
-    </div>
+      <div class="kpis">
+        <div class="pill"><b id="kpiShift">0.0</b><span class="muted">Bubble growth shift (px)</span></div>
+        <div class="pill"><b id="kpiFrames">0</b><span class="muted">Streaming frames</span></div>
+        <div class="pill"><b id="kpiMs">0.0</b><span class="muted">Assistant stream time (ms)</span></div>
+        <div class="pill"><b id="kpiMode">pretext</b><span class="muted">Current mode</span></div>
+      </div>
 
-    <div class="grid">
-      <section class="card">
-        <div class="title">A) DOM chat (baseline)</div>
-        <div id="chatDom" class="chat"></div>
-      </section>
-      <section class="card">
-        <div class="title">B) Pretext pre-sized chat</div>
-        <div id="chatPretext" class="chat"></div>
-      </section>
-    </div>
+      <div id="chat" class="chat"></div>
+
+      <div class="composer">
+        <textarea id="input" rows="2">Give me 3 launch copy variants and explain which one should convert best.</textarea>
+        <button id="send">Send</button>
+      </div>
+      <div id="status" class="status muted">Ready.</div>
+    </section>
   </div>
 
   <script type="module">
-    const textEl = document.getElementById('text');
+    const chat = document.getElementById('chat');
+    const modeEl = document.getElementById('mode');
     const fontEl = document.getElementById('font');
     const lineHeightEl = document.getElementById('lineHeight');
-    const runBtn = document.getElementById('run');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const statusEl = document.getElementById('status');
 
-    const domJankEl = document.getElementById('domJank');
-    const pretextJankEl = document.getElementById('pretextJank');
-    const domMsEl = document.getElementById('domMs');
-    const pretextMsEl = document.getElementById('pretextMs');
-
-    const chatDom = document.getElementById('chatDom');
-    const chatPretext = document.getElementById('chatPretext');
+    const kpiShift = document.getElementById('kpiShift');
+    const kpiFrames = document.getElementById('kpiFrames');
+    const kpiMs = document.getElementById('kpiMs');
+    const kpiMode = document.getElementById('kpiMode');
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const now = () => performance.now();
 
-    function baseChat(container) {
-      container.innerHTML = '';
-      const intro = document.createElement('div');
-      intro.className = 'msg user';
-      intro.textContent = 'Can you improve the launch copy and keep it readable in chat cards?';
-      container.appendChild(intro);
+    const replies = [
+      `Here are 3 variants:\n\nA) \"Launch in one click. Pixel Claw turns your rough app idea into production-ready UI flows in minutes.\"\n\nB) \"From idea to clickable demo in 30 minutes. Pixel Claw plans, designs, and ships your first flow fast.\"\n\nC) \"Stop starting from blank screens. Pixel Claw gives you launch-ready product flows with conversion-aware defaults.\"\n\nBest bet: B, because it leads with a concrete time-to-value promise and outcome.`,
+      `Great prompt. I’d test these:\n\n1) Outcome-first\n2) Time-to-value\n3) Pain-relief\n\nFor early buyers, time-to-value usually wins if you can prove it with a visible POC and a clear before/after.`
+    ];
+
+    let pretext;
+    try {
+      pretext = await import('https://esm.sh/@chenglou/pretext@0.0.4');
+    } catch (e) {
+      statusEl.textContent = `Could not load Pretext: ${e?.message || e}`;
+      statusEl.style.color = '#ff9fa0';
     }
 
-    function appendAssistant(container, text) {
-      const m = document.createElement('div');
-      m.className = 'msg assistant';
-      m.textContent = text;
-      container.appendChild(m);
-      return m;
+    function addMsg(role, text='') {
+      const el = document.createElement('div');
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+      return el;
     }
 
-    async function run() {
-      runBtn.disabled = true;
-      runBtn.textContent = 'Running...';
+    function seed() {
+      chat.innerHTML = '';
+      addMsg('assistant', 'Welcome — switch between DOM and Pretext mode, then send prompts and watch the stream behavior.');
+    }
 
-      const api = await import('https://esm.sh/@chenglou/pretext@0.0.4');
-      const fullText = textEl.value;
+    async function streamAssistant(fullText) {
+      const mode = modeEl.value;
       const font = fontEl.value.trim() || '16px Inter';
       const lineHeight = Number(lineHeightEl.value) || 24;
+      kpiMode.textContent = mode;
 
-      baseChat(chatDom);
-      baseChat(chatPretext);
+      const bubble = addMsg('assistant', '');
+      bubble.style.font = font;
+      bubble.style.lineHeight = `${lineHeight}px`;
 
-      const domMsg = appendAssistant(chatDom, '');
-      const preMsg = appendAssistant(chatPretext, '');
-      preMsg.style.font = font;
-      preMsg.style.lineHeight = `${lineHeight}px`;
-
-      let domJank = 0;
-      let preJank = 0;
-      let domPrev = domMsg.getBoundingClientRect().height;
-      let prePrev = preMsg.getBoundingClientRect().height;
-
-      const domStart = now();
-      for (let i = 1; i <= fullText.length; i += 6) {
-        domMsg.textContent = fullText.slice(0, i);
-        const h = domMsg.getBoundingClientRect().height;
-        domJank += Math.abs(h - domPrev);
-        domPrev = h;
-        chatDom.scrollTop = chatDom.scrollHeight;
-        await sleep(6);
+      const bubbleWidth = 336; // aligned with max-width: 360px minus padding
+      if (mode === 'pretext' && pretext) {
+        const prepared = pretext.prepare(fullText, font);
+        const measured = pretext.layout(prepared, bubbleWidth, lineHeight);
+        bubble.style.height = `${Math.max(lineHeight, measured.height + 4)}px`;
+      } else {
+        bubble.style.height = '';
       }
-      const domTotal = now() - domStart;
 
-      const preStart = now();
-      const bubbleWidth = Math.floor(chatPretext.clientWidth * 0.82) - 26;
-      const preparedFull = api.prepare(fullText, font);
-      const measuredFull = api.layout(preparedFull, bubbleWidth, lineHeight);
-      // Reserve final bubble size up front (the real Pretext UX win: no growth-jank while streaming)
-      preMsg.style.height = `${Math.max(lineHeight, measuredFull.height + 4)}px`;
-      prePrev = preMsg.getBoundingClientRect().height;
+      let totalShift = 0;
+      let prevHeight = bubble.getBoundingClientRect().height;
+      let frames = 0;
+      const start = performance.now();
 
-      for (let i = 1; i <= fullText.length; i += 6) {
-        const partial = fullText.slice(0, i);
-        preMsg.textContent = partial;
-
-        const h = preMsg.getBoundingClientRect().height;
-        preJank += Math.abs(h - prePrev);
-        prePrev = h;
-        chatPretext.scrollTop = chatPretext.scrollHeight;
-        await sleep(6);
+      for (let i = 1; i <= fullText.length; i += 5) {
+        bubble.textContent = fullText.slice(0, i);
+        const h = bubble.getBoundingClientRect().height;
+        totalShift += Math.abs(h - prevHeight);
+        prevHeight = h;
+        frames++;
+        chat.scrollTop = chat.scrollHeight;
+        await sleep(8);
       }
-      const preTotal = now() - preStart;
 
-      domJankEl.textContent = domJank.toFixed(1);
-      pretextJankEl.textContent = preJank.toFixed(1);
-      domMsEl.textContent = domTotal.toFixed(1);
-      pretextMsEl.textContent = preTotal.toFixed(1);
-
-      runBtn.disabled = false;
-      runBtn.textContent = 'Run showcase';
+      kpiShift.textContent = totalShift.toFixed(1);
+      kpiFrames.textContent = String(frames);
+      kpiMs.textContent = (performance.now() - start).toFixed(1);
+      statusEl.textContent = `Done. ${mode === 'pretext' ? 'Pre-sized bubble kept layout stable.' : 'Baseline bubble grew during stream.'}`;
+      statusEl.style.color = '#9eabcf';
     }
 
-    runBtn.addEventListener('click', run);
-    run();
+    async function onSend() {
+      const q = inputEl.value.trim();
+      if (!q) return;
+      sendBtn.disabled = true;
+      addMsg('user', q);
+      statusEl.textContent = 'Streaming assistant response...';
+
+      const reply = replies[Math.floor(Math.random() * replies.length)];
+      await streamAssistant(reply);
+
+      sendBtn.disabled = false;
+    }
+
+    modeEl.addEventListener('change', () => {
+      statusEl.textContent = modeEl.value === 'pretext'
+        ? 'Pretext mode: assistant bubbles are pre-sized before stream.'
+        : 'DOM mode: assistant bubble grows naturally during stream.';
+    });
+
+    sendBtn.addEventListener('click', onSend);
+    inputEl.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSend();
+    });
+
+    seed();
   </script>
 </body>
 </html>
