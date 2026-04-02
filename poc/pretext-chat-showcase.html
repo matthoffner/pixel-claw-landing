@@ -122,13 +122,13 @@
 
       let domJank = 0;
       let preJank = 0;
-      let domPrev = chatDom.scrollHeight;
-      let prePrev = chatPretext.scrollHeight;
+      let domPrev = domMsg.getBoundingClientRect().height;
+      let prePrev = preMsg.getBoundingClientRect().height;
 
       const domStart = now();
       for (let i = 1; i <= fullText.length; i += 6) {
         domMsg.textContent = fullText.slice(0, i);
-        const h = chatDom.scrollHeight;
+        const h = domMsg.getBoundingClientRect().height;
         domJank += Math.abs(h - domPrev);
         domPrev = h;
         chatDom.scrollTop = chatDom.scrollHeight;
@@ -137,16 +137,18 @@
       const domTotal = now() - domStart;
 
       const preStart = now();
+      const bubbleWidth = Math.floor(chatPretext.clientWidth * 0.82) - 26;
+      const preparedFull = api.prepare(fullText, font);
+      const measuredFull = api.layout(preparedFull, bubbleWidth, lineHeight);
+      // Reserve final bubble size up front (the real Pretext UX win: no growth-jank while streaming)
+      preMsg.style.height = `${Math.max(lineHeight, measuredFull.height + 4)}px`;
+      prePrev = preMsg.getBoundingClientRect().height;
+
       for (let i = 1; i <= fullText.length; i += 6) {
         const partial = fullText.slice(0, i);
-        const bubbleWidth = Math.floor(chatPretext.clientWidth * 0.82) - 26;
-        const prepared = api.prepare(partial, font);
-        const measured = api.layout(prepared, bubbleWidth, lineHeight);
-
-        preMsg.style.height = `${Math.max(lineHeight, measured.height + 4)}px`;
         preMsg.textContent = partial;
 
-        const h = chatPretext.scrollHeight;
+        const h = preMsg.getBoundingClientRect().height;
         preJank += Math.abs(h - prePrev);
         prePrev = h;
         chatPretext.scrollTop = chatPretext.scrollHeight;
