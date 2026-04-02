@@ -19,7 +19,7 @@
     .pill { background:#0b1324; border:1px solid #2f436f; border-radius:10px; padding:10px; }
     .pill b { display:block; font-size:18px; }
     .chat { height: 500px; overflow:auto; background:#0b1221; border:1px solid #2b406c; border-radius:10px; padding:10px; margin-top:10px; }
-    .msg { max-width: 360px; padding: 10px 12px; border-radius: 14px; line-height: 1.45; margin: 8px 0; white-space: pre-wrap; overflow-wrap: break-word; }
+    .msg { box-sizing: border-box; max-width: 360px; padding: 10px 12px; border-radius: 14px; line-height: 1.45; margin: 8px 0; white-space: pre-wrap; overflow-wrap: break-word; }
     .user { margin-left:auto; background:#183a2f; border:1px solid #2f6a56; }
     .assistant { background:#1a2743; border:1px solid #324c80; }
     .composer { display:grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
@@ -120,11 +120,12 @@
       bubble.style.font = font;
       bubble.style.lineHeight = `${lineHeight}px`;
 
-      const bubbleWidth = 336; // aligned with max-width: 360px minus padding
+      const bubbleWidth = 336; // max-width minus horizontal padding
       if (mode === 'pretext' && pretext) {
-        const prepared = pretext.prepare(fullText, font);
+        const prepared = pretext.prepare(fullText, font, { whiteSpace: 'pre-wrap' });
         const measured = pretext.layout(prepared, bubbleWidth, lineHeight);
-        bubble.style.height = `${Math.max(lineHeight, measured.height + 4)}px`;
+        const verticalChrome = 22; // 10px top + 10px bottom + 1px*2 border
+        bubble.style.height = `${Math.max(lineHeight + verticalChrome, measured.height + verticalChrome)}px`;
       } else {
         bubble.style.height = '';
       }
