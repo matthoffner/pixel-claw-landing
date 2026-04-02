@@ -13,6 +13,7 @@ This folder is the implementation spine for the Pixel Agents platform concept:
 - `memory-store.example.json` — Example scoped memory contract
 - `web-demo.html` — Clickable browser POC for agent selection + memory injection
 - `pretext-layout-poc.html` — New text layout benchmark POC using `@chenglou/pretext` for card sizing + canvas line rendering
+- `pretext-chat-showcase.html` — Side-by-side chat demo showing DOM streaming vs Pretext pre-sized bubbles
 - `mobile/` — Expo React Native app scaffold targeting TestFlight
 - `../api/cdp-session.js` — CDP bridge endpoint for remote Chrome tab/session metadata
 
