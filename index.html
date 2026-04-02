@@ -264,6 +264,39 @@
         color: #ffffff;
       }
 
+      .offer-strip {
+        margin-top: 12px;
+        border: 1px solid #3f5f8f;
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(16, 30, 54, 0.78);
+      }
+
+      .offer-strip h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+
+      .offer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 8px;
+      }
+
+      .offer-card {
+        border: 1px solid #3a5277;
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(11, 21, 40, 0.8);
+        color: #d8e5ff;
+      }
+
+      .offer-card strong {
+        display: block;
+        color: #ffffff;
+        margin-bottom: 4px;
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;
@@ -316,6 +349,27 @@
             <div class="proof-kpi"><strong>Support triage:</strong> 31% fewer manual routing touches before escalation.</div>
             <div class="proof-kpi"><strong>Delivery target:</strong> TestFlight pilot teams receive weekly KPI snapshots + action logs.</div>
           </div>
+        </div>
+
+        <div class="offer-strip">
+          <h3>Pick a paid pilot package</h3>
+          <div class="offer-grid">
+            <div class="offer-card">
+              <strong>Starter • $3k/mo</strong>
+              One workflow live in 14 days, weekly KPI review, async operator support.
+            </div>
+            <div class="offer-card">
+              <strong>Growth • $5k/mo</strong>
+              Two workflows + memory tuning, weekly optimization sprint, ROI scorecard.
+            </div>
+            <div class="offer-card">
+              <strong>Scale • $8k/mo</strong>
+              Three workflows, live oversight controls, launch lead for internal rollout.
+            </div>
+          </div>
+          <p style="margin-top:10px; font-size:14px; color:#d5e3ff;">
+            Need a custom scope? <a href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Custom%20Pilot%20Scope" style="color:#8ad5ff;">Request a custom pilot plan</a> with target KPI + go-live date.
+          </p>
         </div>
       </section>
 
