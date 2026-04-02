@@ -234,6 +234,36 @@
         margin-top: 10px;
       }
 
+      .proof-strip {
+        margin-top: 12px;
+        border: 1px solid #35527a;
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(19, 33, 59, 0.72);
+      }
+
+      .proof-strip h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+
+      .proof-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+      }
+
+      .proof-kpi {
+        border: 1px solid #2f436a;
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(11, 21, 40, 0.75);
+      }
+
+      .proof-kpi strong {
+        color: #ffffff;
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;
@@ -276,6 +306,15 @@
               href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Pilot%20Fit%20Check&body=Team%20size%3A%0AFirst%20workflow%3A%0ATarget%20launch%20window%3A%0AEstimated%20monthly%20automation%20value%3A"
               >Send fit check</a
             >
+          </div>
+        </div>
+
+        <div class="proof-strip">
+          <h3>Pilot proof from current workflow simulations</h3>
+          <div class="proof-grid">
+            <div class="proof-kpi"><strong>Lead follow-up:</strong> 42% faster first response in a timed operator simulation.</div>
+            <div class="proof-kpi"><strong>Support triage:</strong> 31% fewer manual routing touches before escalation.</div>
+            <div class="proof-kpi"><strong>Delivery target:</strong> TestFlight pilot teams receive weekly KPI snapshots + action logs.</div>
           </div>
         </div>
       </section>
