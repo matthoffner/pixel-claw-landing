@@ -21,6 +21,7 @@
         background: radial-gradient(900px 460px at 85% -25%, #2b1650 0%, transparent 60%), var(--bg);
       }
       .layout { min-height: 100vh; padding: 16px; }
+      .hidden { display: none !important; }
       .right { padding: 0; }
       .left {
         position: fixed;
@@ -64,6 +65,21 @@
       }
       .shell-top { border-bottom: 1px solid var(--line); padding: 14px; display:flex; justify-content:space-between; align-items:center; }
       .badge { border: 1px solid #2f5f8e; border-radius: 999px; padding: 4px 9px; font-size: 12px; color: #a8deff; }
+      .metric-badge {
+        display: inline-block;
+        margin-top: 6px;
+        border: 1px solid #2f5f8e;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 12px;
+        color: #bce7ff;
+      }
+      .shell-sub {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #a8bcdf;
+        max-width: 64ch;
+      }
       #appRoot { padding: 14px; }
       .meta { font-size: 12px; color: #95abd6; margin-top: 8px; }
       #loopHistory { margin-top: 10px; display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
@@ -151,6 +167,57 @@
         box-shadow: 0 8px 28px rgba(0, 0, 0, 0.34);
       }
       .loop-pill.hidden { display: none; }
+      .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .preset-btn {
+        border: 1px solid #334773;
+        border-radius: 10px;
+        background: #0d1735;
+        color: #dcecff;
+        padding: 10px;
+        text-align: left;
+        cursor: pointer;
+      }
+      .preset-btn.active {
+        border-color: #5be5ff;
+        box-shadow: inset 0 0 0 1px rgba(91, 229, 255, 0.35);
+      }
+      .preset-btn strong {
+        display: block;
+        font-size: 13px;
+      }
+      .preset-btn span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #a8bcdf;
+      }
+      .preset-preview {
+        margin-top: 10px;
+        border: 1px solid #2e446f;
+        border-radius: 12px;
+        background: rgba(8, 15, 34, 0.72);
+        padding: 10px;
+      }
+      .preset-preview ul {
+        margin: 8px 0 0 0;
+        padding-left: 18px;
+        color: #bfd7ff;
+      }
+      .preset-preview li { margin-top: 4px; }
+      .text-link {
+        border: 0;
+        background: transparent;
+        color: #9fd7ff;
+        cursor: pointer;
+        padding: 0;
+        font-size: 12px;
+        text-decoration: underline;
+      }
       @media (max-width: 940px) {
         .layout { padding: 10px; }
         .left { width: 100vw; border-left: 0; }
@@ -170,10 +237,13 @@
         <div class="shell">
           <div class="shell-top">
             <div>
-              <div class="badge">LIVE WIDGET APP</div>
-              <div style="margin-top:6px;font-weight:700;">Todo Flow Demo</div>
+              <div class="badge">BUYER DEMO</div>
+              <div id="valueTitle" style="margin-top:6px;font-weight:700;">SaaS onboarding optimization</div>
+              <div id="valueSubtitle" class="shell-sub">Clarify first-run value and reduce trial drop-off on mobile.</div>
+              <div id="valueMetric" class="metric-badge">Success metric: +12% activation completion</div>
             </div>
             <div class="row" style="width:auto;">
+              <a class="btn ghost" style="padding:8px 10px;text-decoration:none;display:inline-block;" href="/poc/pretext-chat-showcase.html" target="_blank" rel="noopener noreferrer">Pretext showcase</a>
               <button id="autoToggle" class="btn ghost" style="padding:8px 10px;">Auto: ON</button>
               <button id="openConfig" class="btn ghost" style="padding:8px 10px;">Config</button>
               <button id="reset" class="btn ghost" style="padding:8px 10px;">Reset</button>
@@ -189,9 +259,28 @@
       <div class="row" style="justify-content:space-between;align-items:center;">
         <div>
           <h1 style="font-size:22px;">Goal → App</h1>
-          <p>Set goals, run loop mode, and watch the preview update live.</p>
+          <p>Pick a buyer scenario, generate the first version, then iterate only when needed.</p>
         </div>
         <button id="closeConfig" class="btn ghost" style="width:auto;height:40px;">Close</button>
+      </div>
+
+      <div class="card">
+        <h2>Buyer scenario</h2>
+        <div class="preset-grid">
+          <button id="presetSaas" class="preset-btn" data-preset="saas-onboarding">
+            <strong>SaaS onboarding optimization</strong>
+            <span>Lift activation in first session</span>
+          </button>
+          <button id="presetLocal" class="preset-btn" data-preset="local-services">
+            <strong>Local services lead capture</strong>
+            <span>Get more qualified quote requests</span>
+          </button>
+          <button id="presetEcom" class="preset-btn" data-preset="ecommerce">
+            <strong>Ecommerce page conversion</strong>
+            <span>Increase add-to-cart rate</span>
+          </button>
+        </div>
+        <div id="scenarioMetric" class="meta" style="margin-top:10px;">Success metric: +12% activation completion</div>
       </div>
 
       <div class="card">
@@ -218,47 +307,99 @@
           <button id="loopStart" class="btn ghost">Start loop</button>
           <button id="loopStop" class="btn danger">Stop</button>
         </div>
-        <textarea id="loopFeedback" style="margin-top:8px;min-height:62px;" placeholder="If denying, provide feedback here."></textarea>
-        <div class="row" style="margin-top:8px;">
-          <button id="loopApprove" class="btn">Approve + next</button>
-          <button id="loopDeny" class="btn ghost">Deny w/ feedback</button>
+        <button id="toggleLoopDetails" class="text-link" style="margin-top:8px;">Show manual review details</button>
+        <div id="loopDetails" class="hidden">
+          <textarea id="loopFeedback" style="margin-top:8px;min-height:62px;" placeholder="If denying, provide feedback here."></textarea>
+          <div class="row" style="margin-top:8px;">
+            <button id="loopApprove" class="btn">Approve + next</button>
+            <button id="loopDeny" class="btn ghost">Deny w/ feedback</button>
+          </div>
+          <div class="meta" id="loopMeta">Loop idle.</div>
+          <div id="loopHistory"></div>
         </div>
-        <div class="meta" id="loopMeta">Loop idle.</div>
-        <div id="loopHistory"></div>
       </div>
 
       <div class="card">
-        <h2>Session</h2>
-        <input id="sessionNs" value="session:widget-demo:matt" />
-        <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
-      </div>
-
-      <div class="card">
-        <h2>MCP integration</h2>
-        <div class="row">
-          <select id="mcpProvider">
-            <option value="linear">Linear</option>
-            <option value="notion">Notion</option>
-            <option value="github">GitHub</option>
-          </select>
-          <button id="mcpConnect" class="btn ghost">Connect</button>
+        <div class="row" style="justify-content:space-between;align-items:center;">
+          <h2 style="margin:0;">Technical controls</h2>
+          <button id="toggleTechnical" class="text-link">Show advanced tools</button>
         </div>
-        <p id="mcpStatus" style="margin-top:8px;">Not connected</p>
+        <div id="technicalControls" class="hidden">
+          <div class="card" style="margin-top:10px;">
+            <h2>Session</h2>
+            <input id="sessionNs" value="session:widget-demo:matt" />
+            <p style="margin-top:8px;">State is saved to this namespace so the app feels persistent.</p>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h2>Browser execution mode</h2>
+            <div class="row">
+              <button id="modeHeadless" class="btn ghost">Headless</button>
+              <button id="modeLive" class="btn ghost">Live view</button>
+            </div>
+            <p id="browserModeStatus" style="margin-top:8px;">Mode: Headless automation</p>
+            <div id="tabList" class="meta" style="margin-top:8px;">Tabs: dashboard, checkout, settings</div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h2>CDP bridge (alpha)</h2>
+            <input id="cdpTargetUrl" value="https://example.com" />
+            <div class="row" style="margin-top:8px;">
+              <button id="cdpConnect" class="btn ghost">Connect CDP</button>
+              <button id="cdpRefreshTabs" class="btn ghost">Refresh tabs</button>
+            </div>
+            <input id="cdpRelayUrl" value="ws://127.0.0.1:8787/ws/cdp" style="margin-top:8px;" />
+            <div class="row" style="margin-top:8px;">
+              <button id="cdpStreamStart" class="btn ghost">Start live stream</button>
+              <button id="cdpStreamStop" class="btn ghost">Stop stream</button>
+            </div>
+            <p id="cdpStatus" style="margin-top:8px;">CDP disconnected</p>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <h2>MCP integration</h2>
+            <div class="row">
+              <select id="mcpProvider">
+                <option value="linear">Linear</option>
+                <option value="notion">Notion</option>
+                <option value="github">GitHub</option>
+              </select>
+              <button id="mcpConnect" class="btn ghost">Connect</button>
+            </div>
+            <p id="mcpStatus" style="margin-top:8px;">Not connected</p>
+          </div>
+        </div>
       </div>
     </aside>
 
     <div id="setupOverlay" class="setup-overlay">
       <div class="setup-card">
-        <h1 style="font-size:24px; margin-bottom:6px;">Set your goal</h1>
-        <p style="margin-bottom:10px;">Start from a desired outcome, then watch the app iterate live.</p>
+        <h1 style="font-size:24px; margin-bottom:6px;">Start with a business outcome</h1>
+        <p style="margin-bottom:10px;">Choose a buyer scenario, generate the first version, then decide if you want automated loop revisions.</p>
+        <div class="preset-grid">
+          <button id="setupPresetSaas" class="preset-btn" data-preset="saas-onboarding">
+            <strong>SaaS onboarding optimization</strong>
+            <span>Increase trial-to-activation rate</span>
+          </button>
+          <button id="setupPresetLocal" class="preset-btn" data-preset="local-services">
+            <strong>Local services lead capture</strong>
+            <span>Drive more booked estimates</span>
+          </button>
+          <button id="setupPresetEcom" class="preset-btn" data-preset="ecommerce">
+            <strong>Ecommerce page conversion</strong>
+            <span>Improve add-to-cart from PDP</span>
+          </button>
+        </div>
+        <div class="preset-preview">
+          <strong id="setupPreviewTitle">SaaS onboarding optimization</strong>
+          <div id="setupPreviewMetric" class="meta">Success metric: +12% activation completion</div>
+          <ul id="setupPreviewList"></ul>
+        </div>
         <textarea id="setupPrompt" style="min-height:98px;">Goal: Improve onboarding conversion by making the first screen clearer and more trustworthy on mobile. Keep task flow the same.</textarea>
         <div class="row" style="margin-top:10px; align-items:center;">
           <label style="display:flex;gap:8px;align-items:center;color:#c9deff;">
-            <input id="setupAutoMode" type="checkbox" checked style="width:auto;padding:0;" />
-            Auto mode ON
+            <input id="setupAutoMode" type="checkbox" style="width:auto;padding:0;" />
+            Start autopilot loop
           </label>
           <input id="setupMaxIterations" type="number" min="1" max="20" value="8" title="Max iterations" />
-          <button id="setupStart" class="btn">Start</button>
+          <button id="setupStart" class="btn">Generate first version</button>
         </div>
       </div>
     </div>
@@ -293,11 +434,33 @@
       const appRoot = document.getElementById('appRoot');
       const mcpProviderEl = document.getElementById('mcpProvider');
       const mcpStatusEl = document.getElementById('mcpStatus');
+      const modeHeadlessEl = document.getElementById('modeHeadless');
+      const modeLiveEl = document.getElementById('modeLive');
+      const browserModeStatusEl = document.getElementById('browserModeStatus');
+      const tabListEl = document.getElementById('tabList');
+      const cdpTargetUrlEl = document.getElementById('cdpTargetUrl');
+      const cdpStatusEl = document.getElementById('cdpStatus');
+      const cdpConnectEl = document.getElementById('cdpConnect');
+      const cdpRefreshTabsEl = document.getElementById('cdpRefreshTabs');
+      const cdpRelayUrlEl = document.getElementById('cdpRelayUrl');
+      const cdpStreamStartEl = document.getElementById('cdpStreamStart');
+      const cdpStreamStopEl = document.getElementById('cdpStreamStop');
       const configPanelEl = document.getElementById('configPanel');
       const configBackdropEl = document.getElementById('configBackdrop');
       const openConfigEl = document.getElementById('openConfig');
       const closeConfigEl = document.getElementById('closeConfig');
       const autoToggleEl = document.getElementById('autoToggle');
+      const valueTitleEl = document.getElementById('valueTitle');
+      const valueSubtitleEl = document.getElementById('valueSubtitle');
+      const valueMetricEl = document.getElementById('valueMetric');
+      const scenarioMetricEl = document.getElementById('scenarioMetric');
+      const setupPreviewTitleEl = document.getElementById('setupPreviewTitle');
+      const setupPreviewMetricEl = document.getElementById('setupPreviewMetric');
+      const setupPreviewListEl = document.getElementById('setupPreviewList');
+      const toggleLoopDetailsEl = document.getElementById('toggleLoopDetails');
+      const loopDetailsEl = document.getElementById('loopDetails');
+      const toggleTechnicalEl = document.getElementById('toggleTechnical');
+      const technicalControlsEl = document.getElementById('technicalControls');
 
       const loopEnabledEl = document.getElementById('loopEnabled');
       const loopGoalEl = document.getElementById('loopGoal');
@@ -325,13 +488,20 @@
       const decisionStopEl = document.getElementById('decisionStop');
       const loopPauseResumeEl = document.getElementById('loopPauseResume');
       const loopLiveChipEl = document.getElementById('loopLiveChip');
+      const presetButtons = Array.from(document.querySelectorAll('[data-preset]'));
 
       let runtimeReady = false;
       let runtimeInitPromise = null;
       let appState = { todos: [] };
       let mcpConnected = false;
+      let browserMode = 'headless';
+      let cdpLastTabs = [];
+      let cdpEventSource = null;
+      let cdpSocket = null;
+      let cdpRequestId = 1;
       let currentPrompt = '';
       let memoryDbPromise = null;
+      let selectedPresetId = 'saas-onboarding';
 
       const loopState = {
         running: false,
@@ -348,6 +518,47 @@
         { id: 2, title: 'Ship homepage improvement', status: 'active' },
         { id: 3, title: 'Review completed tasks', status: 'done' }
       ];
+      const presets = {
+        'saas-onboarding': {
+          title: 'SaaS onboarding optimization',
+          subtitle: 'Clarify first-run value and reduce trial drop-off on mobile.',
+          metric: 'Success metric: +12% activation completion',
+          prompt: 'Goal: Increase SaaS trial-to-activation by clarifying onboarding value, reducing friction in first setup, and adding trust signals without adding extra steps.',
+          loopGoal: 'Improve onboarding clarity and trust while preserving a short path to activation.',
+          previewItems: ['Outcome-focused first screen', 'Clear primary CTA with minimal distractions', 'Trust indicators before account setup'],
+          todos: [
+            { id: 11, title: 'Rewrite welcome headline to value outcome', status: 'planning' },
+            { id: 12, title: 'Add progress stepper with 2 steps max', status: 'active' },
+            { id: 13, title: 'Show customer logos + proof points', status: 'done' }
+          ]
+        },
+        'local-services': {
+          title: 'Local services lead capture',
+          subtitle: 'Turn more visitors into qualified quote requests.',
+          metric: 'Success metric: +18% quote form completion',
+          prompt: 'Goal: Increase qualified plumbing quote requests by making urgency, trust, and service coverage clear on the first screen and shortening form friction.',
+          loopGoal: 'Raise lead conversion with clear service area, response-time promises, and frictionless quote requests.',
+          previewItems: ['Fast quote CTA above the fold', 'Trust badges and response-time promise', 'Short form with phone-first option'],
+          todos: [
+            { id: 21, title: 'Add emergency call-now strip for mobile', status: 'planning' },
+            { id: 22, title: 'Highlight service area zip coverage', status: 'active' },
+            { id: 23, title: 'Surface verified review snippets', status: 'done' }
+          ]
+        },
+        ecommerce: {
+          title: 'Ecommerce product page conversion',
+          subtitle: 'Move more shoppers from product view to cart.',
+          metric: 'Success metric: +9% add-to-cart rate',
+          prompt: 'Goal: Improve ecommerce product page conversion by making product benefits, social proof, and shipping confidence clearer before the add-to-cart decision.',
+          loopGoal: 'Improve product page clarity and confidence signals to increase add-to-cart intent.',
+          previewItems: ['Benefit-led headline and product framing', 'Ratings, reviews, and returns confidence', 'Sticky add-to-cart with delivery promise'],
+          todos: [
+            { id: 31, title: 'Reorder gallery to show lifestyle image first', status: 'planning' },
+            { id: 32, title: 'Add shipping/returns confidence row', status: 'active' },
+            { id: 33, title: 'Tighten CTA copy for buying intent', status: 'done' }
+          ]
+        }
+      };
 
       function nsKey() { return `pixel-claw:${sessionEl.value.trim() || 'session:default'}`; }
       function stateKey() { return `${nsKey()}:appState`; }
@@ -450,6 +661,105 @@
         autoToggleEl.textContent = autoOn ? 'Auto: ON' : 'Auto: OFF';
       }
 
+      function renderPresetButtons() {
+        presetButtons.forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.preset === selectedPresetId);
+        });
+      }
+
+      function renderPresetPreview() {
+        const preset = presets[selectedPresetId];
+        if (!preset) return;
+
+        valueTitleEl.textContent = preset.title;
+        valueSubtitleEl.textContent = preset.subtitle;
+        valueMetricEl.textContent = preset.metric;
+        scenarioMetricEl.textContent = preset.metric;
+
+        setupPreviewTitleEl.textContent = preset.title;
+        setupPreviewMetricEl.textContent = preset.metric;
+        setupPreviewListEl.innerHTML = '';
+        preset.previewItems.forEach((item) => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          setupPreviewListEl.appendChild(li);
+        });
+      }
+
+      function renderPresetAppCanvas() {
+        const preset = presets[selectedPresetId];
+        if (!preset) return;
+        appRoot.innerHTML = '';
+
+        const wrap = document.createElement('div');
+        wrap.style.display = 'grid';
+        wrap.style.gap = '12px';
+
+        const hero = document.createElement('div');
+        hero.className = 'preset-preview';
+        hero.innerHTML = `<strong>${preset.title}</strong><div class="meta" style="margin-top:6px;">${preset.prompt}</div>`;
+        wrap.appendChild(hero);
+
+        const list = document.createElement('div');
+        list.className = 'preset-preview';
+        list.innerHTML = '<strong>Initial UI content</strong>';
+        const ul = document.createElement('ul');
+        preset.previewItems.forEach((item) => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        list.appendChild(ul);
+        wrap.appendChild(list);
+
+        appRoot.appendChild(wrap);
+      }
+
+      async function applyPreset(presetId, { updateSetupPrompt = true, seedState = true } = {}) {
+        const preset = presets[presetId];
+        if (!preset) return;
+        selectedPresetId = presetId;
+
+        promptEl.value = preset.prompt;
+        loopGoalEl.value = preset.loopGoal;
+        if (updateSetupPrompt) setupPromptEl.value = preset.prompt;
+
+        if (seedState) {
+          appState = { todos: structuredClone(preset.todos) };
+          await saveState();
+        }
+        renderPresetButtons();
+        renderPresetPreview();
+        renderPresetAppCanvas();
+        statusEl.textContent = `Loaded preset: ${preset.title}`;
+        setBottomStatus(`Preset selected: ${preset.title}`);
+      }
+
+      function syncLoopDetailsUI() {
+        const open = !loopDetailsEl.classList.contains('hidden');
+        toggleLoopDetailsEl.textContent = open ? 'Hide manual review details' : 'Show manual review details';
+      }
+
+      function syncTechnicalUI() {
+        const open = !technicalControlsEl.classList.contains('hidden');
+        toggleTechnicalEl.textContent = open ? 'Hide advanced tools' : 'Show advanced tools';
+      }
+
+      function updateBrowserModeUI() {
+        const live = browserMode === 'live';
+        modeHeadlessEl.style.borderColor = live ? '#334773' : '#5be5ff';
+        modeLiveEl.style.borderColor = live ? '#5be5ff' : '#334773';
+        browserModeStatusEl.textContent = live ? 'Mode: Live review + tab visibility' : 'Mode: Headless automation';
+
+        if (live && cdpLastTabs.length) {
+          renderCdpTabs(cdpLastTabs);
+        } else {
+          tabListEl.textContent = live
+            ? 'Tabs: dashboard (active), docs, billing'
+            : 'Tabs: hidden in headless mode (attach live to inspect)';
+        }
+      }
+
       function syncLoopOverlay() {
         const runningLike = loopState.running || loopState.awaitingDecision;
         loopPauseResumeEl.classList.toggle('hidden', !runningLike);
@@ -503,6 +813,135 @@
         const provider = mcpProviderEl.value;
         mcpStatusEl.textContent = `Connected to ${provider} MCP`;
         statusEl.textContent = `MCP ready: ${provider}`;
+      }
+
+      function renderCdpTabs(tabs) {
+        const list = Array.isArray(tabs) ? tabs : [];
+        cdpLastTabs = list;
+
+        if (!list.length) {
+          tabListEl.textContent = browserMode === 'live'
+            ? 'Tabs: connected, no tabs reported yet'
+            : 'Tabs: hidden in headless mode (attach live to inspect)';
+          return;
+        }
+
+        const label = list
+          .slice(0, 4)
+          .map((tab) => tab.title || tab.url || tab.id || 'untitled')
+          .join(', ');
+        tabListEl.textContent = `Tabs: ${label}`;
+      }
+
+      async function connectCdp(refreshOnly = false) {
+        const targetUrl = (cdpTargetUrlEl.value || 'about:blank').trim();
+        cdpStatusEl.textContent = refreshOnly ? 'Refreshing CDP tabs…' : 'Connecting to CDP…';
+
+        try {
+          const res = await fetch('/api/cdp-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mode: browserMode,
+              targetUrl: refreshOnly ? 'about:blank' : targetUrl
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || 'CDP request failed');
+
+          const tabCount = Array.isArray(data.tabs) ? data.tabs.length : 0;
+          cdpStatusEl.textContent = `CDP connected • ${data.browser || 'Chrome'} • ${tabCount} tabs`;
+          renderCdpTabs(data.tabs || []);
+          statusEl.textContent = `CDP ready (${browserMode})`;
+        } catch (err) {
+          console.error(err);
+          cdpStatusEl.textContent = `CDP error: ${err.message || err}`;
+          statusEl.textContent = 'CDP bridge unavailable (check CHROME_CDP_HTTP_URL)';
+        }
+      }
+
+      function stopCdpStream() {
+        if (cdpEventSource) {
+          cdpEventSource.close();
+          cdpEventSource = null;
+        }
+        if (cdpSocket) {
+          cdpSocket.close();
+          cdpSocket = null;
+        }
+        cdpStatusEl.textContent = 'CDP stream stopped';
+      }
+
+      function requestCdpTargets() {
+        if (!cdpSocket || cdpSocket.readyState !== WebSocket.OPEN) return;
+        cdpSocket.send(JSON.stringify({ id: cdpRequestId++, method: 'Target.getTargets' }));
+      }
+
+      function startCdpStream() {
+        stopCdpStream();
+        cdpStatusEl.textContent = 'Starting CDP live stream…';
+
+        const relayUrl = (cdpRelayUrlEl.value || '').trim();
+        if (relayUrl) {
+          try {
+            const socket = new WebSocket(relayUrl);
+            cdpSocket = socket;
+
+            socket.addEventListener('open', () => {
+              cdpStatusEl.textContent = `CDP relay connected (${browserMode})`;
+              statusEl.textContent = 'Receiving live CDP updates via relay';
+              requestCdpTargets();
+            });
+
+            socket.addEventListener('message', (event) => {
+              try {
+                const msg = JSON.parse(String(event.data || '{}'));
+                const targets = msg?.result?.targetInfos;
+                if (Array.isArray(targets)) {
+                  const tabs = targets
+                    .filter((t) => t.type === 'page')
+                    .map((t) => ({ id: t.targetId, title: t.title || '', url: t.url || '', type: t.type }));
+                  renderCdpTabs(tabs);
+                  cdpStatusEl.textContent = `CDP relay live • ${tabs.length} page tabs`;
+                }
+              } catch (err) {
+                console.error('CDP relay parse error', err);
+              }
+            });
+
+            socket.addEventListener('close', () => {
+              cdpStatusEl.textContent = 'CDP relay disconnected';
+            });
+
+            socket.addEventListener('error', () => {
+              cdpStatusEl.textContent = 'CDP relay error';
+            });
+
+            return;
+          } catch (err) {
+            console.error('Relay connect failed, fallback to SSE', err);
+          }
+        }
+
+        const encoded = encodeURIComponent((cdpTargetUrlEl.value || 'about:blank').trim());
+        const source = new EventSource(`/api/cdp-events?targetUrl=${encoded}`);
+        cdpEventSource = source;
+        source.addEventListener('open', () => {
+          cdpStatusEl.textContent = `CDP stream connected (${browserMode})`;
+          statusEl.textContent = 'Receiving CDP tab updates (SSE fallback)';
+        });
+        source.addEventListener('tabs', (event) => {
+          try {
+            const payload = JSON.parse(event.data || '{}');
+            renderCdpTabs(payload.tabs || []);
+          } catch (err) {
+            console.error('Failed to parse CDP tabs event', err);
+          }
+        });
+        source.addEventListener('error', () => {
+          cdpStatusEl.textContent = 'CDP stream lost. Check endpoint and restart stream.';
+        });
       }
 
       async function mcpSuggestTask(prompt) {
@@ -825,6 +1264,16 @@
           return;
         }
 
+        if (!loopState.running || loopState.paused) {
+          loopState.awaitingDecision = false;
+          closeDecisionSheet();
+          renderLoopHistory();
+          if (loopState.paused) {
+            setBottomStatus(`Loop paused at iteration ${loopState.iteration}/${loopState.maxIterations}.`);
+          }
+          return;
+        }
+
         loopState.iteration += 1;
         loopState.awaitingDecision = true;
         loopState.history.push({
@@ -971,9 +1420,25 @@
         await compileAndRender();
       }
 
+      presetButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const presetId = btn.dataset.preset;
+          if (!presetId) return;
+          void applyPreset(presetId);
+        });
+      });
+
       document.getElementById('generate').addEventListener('click', async () => {
         stopLoop();
         await compileAndRender();
+      });
+      toggleLoopDetailsEl.addEventListener('click', () => {
+        loopDetailsEl.classList.toggle('hidden');
+        syncLoopDetailsUI();
+      });
+      toggleTechnicalEl.addEventListener('click', () => {
+        technicalControlsEl.classList.toggle('hidden');
+        syncTechnicalUI();
       });
       openConfigEl.addEventListener('click', openConfigPanel);
       closeConfigEl.addEventListener('click', closeConfigPanel);
@@ -981,8 +1446,13 @@
       window.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') closeConfigPanel();
       });
+      window.addEventListener('beforeunload', stopCdpStream);
       document.getElementById('seed').addEventListener('click', () => { void seedTasks(); });
       document.getElementById('mcpConnect').addEventListener('click', connectMcp);
+      cdpConnectEl.addEventListener('click', () => { void connectCdp(false); });
+      cdpRefreshTabsEl.addEventListener('click', () => { void connectCdp(true); });
+      cdpStreamStartEl.addEventListener('click', startCdpStream);
+      cdpStreamStopEl.addEventListener('click', stopCdpStream);
       document.getElementById('reset').addEventListener('click', async () => {
         await memoryDelete(stateKey());
         appState = { todos: structuredClone(defaultTodos) };
@@ -1008,6 +1478,18 @@
       });
       setupAutoModeEl.addEventListener('change', syncAutoButtons);
 
+      modeHeadlessEl.addEventListener('click', () => {
+        browserMode = 'headless';
+        updateBrowserModeUI();
+        setBottomStatus('Browser mode set to headless automation.');
+      });
+
+      modeLiveEl.addEventListener('click', () => {
+        browserMode = 'live';
+        updateBrowserModeUI();
+        setBottomStatus('Browser mode set to live review.');
+      });
+
       decisionApproveEl.addEventListener('click', () => { void approveLoopIteration(); });
       decisionDenyEl.addEventListener('click', () => { void denyLoopIteration(); });
       decisionStopEl.addEventListener('click', stopLoop);
@@ -1016,24 +1498,28 @@
         const startPrompt = setupPromptEl.value.trim();
         if (startPrompt) {
           promptEl.value = startPrompt;
-          loopGoalEl.value = startPrompt;
         }
 
         loopMaxEl.value = String(Math.max(1, Math.min(20, Number(setupMaxIterationsEl.value || 8))));
-        loopEnabledEl.checked = true;
+        loopEnabledEl.checked = !!setupAutoModeEl.checked;
 
         setupOverlayEl.classList.add('hidden');
         closeConfigPanel();
 
-        if (setupAutoModeEl.checked || loopEnabledEl.checked) {
+        if (setupAutoModeEl.checked) {
           await startLoop();
         } else {
+          stopLoop();
           await compileAndRender();
         }
       });
 
       appState = await loadState();
+      await applyPreset(selectedPresetId, { seedState: false });
       syncAutoButtons();
+      syncLoopDetailsUI();
+      syncTechnicalUI();
+      updateBrowserModeUI();
       renderLoopHistory();
       await compileAndRender();
       setBottomStatus('Ready. Set your goal to start.');
