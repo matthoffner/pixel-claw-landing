@@ -3,180 +3,591 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pixel Claw — Pretext Functional Chat Showcase</title>
+  <title>Pixel Claw — Agent Chat + Pretext Stability Demo</title>
   <style>
-    :root { color-scheme: dark; }
-    body { margin: 0; background: #0a0f19; color: #ebf1ff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
-    h1 { margin: 0 0 6px; font-size: 28px; }
-    .muted { color: #9eabcf; }
-    .card { background: #10192d; border: 1px solid #273a62; border-radius: 12px; padding: 12px; margin-top: 12px; }
-    .top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: end; }
-    label { display:block; font-size: 12px; color: #b7c5eb; margin-bottom: 6px; }
-    select, input, button, textarea { width:100%; box-sizing:border-box; border-radius:10px; border:1px solid #334b7a; background:#0b1324; color:#eef3ff; padding:10px; }
-    button { cursor:pointer; font-weight:600; background:#2557ff; border-color:#2557ff; }
-    .kpis { display:grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap:8px; margin-top:10px; }
-    .pill { background:#0b1324; border:1px solid #2f436f; border-radius:10px; padding:10px; }
-    .pill b { display:block; font-size:18px; }
-    .chat { height: 500px; overflow:auto; background:#0b1221; border:1px solid #2b406c; border-radius:10px; padding:10px; margin-top:10px; }
-    .msg { box-sizing: border-box; max-width: 360px; padding: 10px 12px; border-radius: 14px; line-height: 1.45; margin: 8px 0; white-space: pre-wrap; overflow-wrap: break-word; }
-    .user { margin-left:auto; background:#183a2f; border:1px solid #2f6a56; }
-    .assistant { background:#1a2743; border:1px solid #324c80; }
-    .composer { display:grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; }
-    .status { font-size: 13px; margin-top: 8px; }
+    :root {
+      color-scheme: dark;
+      --bg: #0a0f19;
+      --panel: #101a2e;
+      --panel-2: #0c1324;
+      --border: #2a3f68;
+      --text: #ebf1ff;
+      --muted: #9eabcf;
+      --brand: #3d72ff;
+      --brand-2: #284cb0;
+      --ok: #4ed39a;
+      --warn: #f5c56b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 80% -20%, #13274f 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    .app {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      gap: 14px;
+      min-height: 100vh;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .sidebar {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .title { font-weight: 700; font-size: 17px; }
+    .muted { color: var(--muted); }
+
+    button, select, textarea, input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #36538d;
+      background: #0c1427;
+      color: #edf2ff;
+      padding: 10px;
+      font: inherit;
+    }
+
+    button { cursor: pointer; font-weight: 600; }
+    .btn-primary { background: var(--brand); border-color: var(--brand); }
+    .btn-ghost { background: #111d38; }
+    .btn-inline { width: auto; padding: 6px 10px; font-size: 12px; }
+
+    .thread-list { display: grid; gap: 8px; overflow: auto; padding-right: 2px; }
+    .thread {
+      background: #0b1326;
+      border: 1px solid #2b4271;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: transform .08s ease;
+    }
+    .thread:hover { transform: translateY(-1px); }
+    .thread.active { border-color: #638cff; background: #102042; }
+    .thread h4 { margin: 0 0 4px; font-size: 13px; }
+    .thread p { margin: 0; font-size: 12px; color: var(--muted); }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+      min-height: 0;
+      padding: 10px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.1fr .7fr .7fr .9fr;
+      gap: 8px;
+      align-items: end;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    label { display: block; margin-bottom: 5px; font-size: 12px; color: #b9c8ec; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .kpi {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px;
+    }
+    .kpi b { display: block; font-size: 18px; }
+    .kpi span { color: var(--muted); font-size: 12px; }
+
+    .chat {
+      min-height: 0;
+      overflow: auto;
+      background: #0b1221;
+      border: 1px solid #29406a;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .row { display: flex; gap: 8px; }
+    .row.user { justify-content: flex-end; }
+
+    .bubble {
+      max-width: 680px;
+      border-radius: 14px;
+      border: 1px solid;
+      padding: 10px 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      position: relative;
+    }
+    .bubble.user { background: #17392f; border-color: #2f6a56; }
+    .bubble.assistant { background: #1a2743; border-color: #355286; }
+
+    .assistant-meta {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(175, 198, 250, 0.25);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      color: #afc4f8;
+      font-size: 12px;
+    }
+
+    .badge {
+      border: 1px solid #46639a;
+      background: #102248;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 2px;
+      opacity: 0.85;
+    }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: #a8c1ff; animation: bounce 1s infinite ease-in-out; }
+    .dot:nth-child(2) { animation-delay: 0.15s; }
+    .dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(.8); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
+
+    .composer {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      width: auto;
+      border-radius: 999px;
+      border: 1px solid #49659b;
+      background: #102042;
+      color: #d7e4ff;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .composer-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    textarea { min-height: 66px; resize: vertical; }
+
+    .status { font-size: 13px; color: var(--muted); }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+
+    @media (max-width: 1020px) {
+      .app { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr 1fr; }
+      .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Pretext Functional Chat Showcase</h1>
-    <div class="muted">Real chat interaction + streamed assistant response. Toggle baseline vs Pretext to see the stability difference.</div>
+  <div class="app">
+    <aside class="panel sidebar">
+      <div>
+        <div class="title">Pixel Agents</div>
+        <div class="muted" style="font-size:13px; margin-top:2px;">Best-in-class chat shell demo. Pretext is one piece of the stack.</div>
+      </div>
+      <button id="newThread" class="btn-primary">+ New chat</button>
+      <div id="threadList" class="thread-list"></div>
+      <div class="panel" style="padding:10px; background:#0c1426; border-color:#253d69;">
+        <div style="font-size:12px; color:#b8c8ef; margin-bottom:6px;">Capabilities in this demo</div>
+        <div class="muted" style="font-size:12px; line-height:1.45;">
+          • Multi-thread inbox
+          • Streaming + stop/regenerate
+          • Assistant action rail
+          • KPI telemetry (TTFT/tokens/s/shift)
+          • Pretext bubble pre-sizing
+        </div>
+      </div>
+    </aside>
 
-    <section class="card">
-      <div class="top">
+    <main class="panel workspace">
+      <section class="topbar">
         <div>
-          <label for="mode">Render mode</label>
-          <select id="mode">
-            <option value="dom">Baseline DOM (no pre-size)</option>
-            <option value="pretext" selected>Pretext pre-size (recommended)</option>
+          <label for="agentMode">Agent mode</label>
+          <select id="agentMode">
+            <option>Growth PM</option>
+            <option>UX Engineer</option>
+            <option selected>Launch Copilot</option>
+            <option>Technical Founder</option>
           </select>
         </div>
         <div>
-          <label for="font">Font</label>
-          <input id="font" value="16px Inter" />
+          <label for="model">Model profile</label>
+          <select id="model">
+            <option selected>Pixel-1 Fast</option>
+            <option>Pixel-1 Reasoning</option>
+            <option>Pixel-1 Deep</option>
+          </select>
         </div>
         <div>
-          <label for="lineHeight">Line Height (px)</label>
-          <input id="lineHeight" type="number" min="18" max="40" value="24" />
+          <label for="memoryScope">Memory scope</label>
+          <select id="memoryScope">
+            <option selected>Thread memory</option>
+            <option>Workspace memory</option>
+            <option>No memory</option>
+          </select>
         </div>
-      </div>
+        <div>
+          <label for="mode">Render mode</label>
+          <select id="mode">
+            <option value="dom">DOM baseline</option>
+            <option value="pretext" selected>Pretext pre-size</option>
+          </select>
+        </div>
+      </section>
 
-      <div class="kpis">
-        <div class="pill"><b id="kpiShift">0.0</b><span class="muted">Bubble growth shift (px)</span></div>
-        <div class="pill"><b id="kpiFrames">0</b><span class="muted">Streaming frames</span></div>
-        <div class="pill"><b id="kpiMs">0.0</b><span class="muted">Assistant stream time (ms)</span></div>
-        <div class="pill"><b id="kpiMode">pretext</b><span class="muted">Current mode</span></div>
-      </div>
+      <section class="kpis">
+        <div class="kpi"><b id="kpiTTFT">0ms</b><span>Time to first token</span></div>
+        <div class="kpi"><b id="kpiTPS">0</b><span>Tokens / sec</span></div>
+        <div class="kpi"><b id="kpiShift">0.0</b><span>Layout shift (px)</span></div>
+        <div class="kpi"><b id="kpiFrames">0</b><span>Stream frames</span></div>
+        <div class="kpi"><b id="kpiContext">0</b><span>Context chars</span></div>
+        <div class="kpi"><b id="kpiMode">pretext</b><span>Stability mode</span></div>
+      </section>
 
-      <div id="chat" class="chat"></div>
+      <section id="chat" class="chat"></section>
 
-      <div class="composer">
-        <textarea id="input" rows="2">Give me 3 launch copy variants and explain which one should convert best.</textarea>
-        <button id="send">Send</button>
-      </div>
-      <div id="status" class="status muted">Ready.</div>
-    </section>
+      <section class="composer">
+        <div class="chips">
+          <button class="chip" data-prompt="Generate 3 launch copy variants for an AI code concierge and rank by conversion potential.">Launch copy</button>
+          <button class="chip" data-prompt="Write a 7-day growth experiment plan for a web demo funnel with measurable KPI targets.">Growth plan</button>
+          <button class="chip" data-prompt="Design a chat UX checklist that feels on par with top AI products.">UX checklist</button>
+        </div>
+        <div class="composer-row">
+          <textarea id="input" placeholder="Ask Pixel Agent to plan, critique, and execute..."></textarea>
+          <div style="display:grid; gap:8px; align-content:start;">
+            <button id="send" class="btn-primary">Send</button>
+            <button id="stop" class="btn-ghost" disabled>Stop</button>
+            <button id="regenerate" class="btn-ghost" disabled>Regenerate</button>
+          </div>
+        </div>
+        <div id="status" class="status">Ready.</div>
+      </section>
+    </main>
   </div>
 
   <script type="module">
     const chat = document.getElementById('chat');
-    const modeEl = document.getElementById('mode');
-    const fontEl = document.getElementById('font');
-    const lineHeightEl = document.getElementById('lineHeight');
+    const threadList = document.getElementById('threadList');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
+    const stopBtn = document.getElementById('stop');
+    const regenBtn = document.getElementById('regenerate');
     const statusEl = document.getElementById('status');
+    const modeEl = document.getElementById('mode');
 
+    const kpiTTFT = document.getElementById('kpiTTFT');
+    const kpiTPS = document.getElementById('kpiTPS');
     const kpiShift = document.getElementById('kpiShift');
     const kpiFrames = document.getElementById('kpiFrames');
-    const kpiMs = document.getElementById('kpiMs');
+    const kpiContext = document.getElementById('kpiContext');
     const kpiMode = document.getElementById('kpiMode');
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    const replies = [
-      `Here are 3 variants:\n\nA) \"Launch in one click. Pixel Claw turns your rough app idea into production-ready UI flows in minutes.\"\n\nB) \"From idea to clickable demo in 30 minutes. Pixel Claw plans, designs, and ships your first flow fast.\"\n\nC) \"Stop starting from blank screens. Pixel Claw gives you launch-ready product flows with conversion-aware defaults.\"\n\nBest bet: B, because it leads with a concrete time-to-value promise and outcome.`,
-      `Great prompt. I’d test these:\n\n1) Outcome-first\n2) Time-to-value\n3) Pain-relief\n\nFor early buyers, time-to-value usually wins if you can prove it with a visible POC and a clear before/after.`
+    const assistantReplies = [
+`Absolutely — here's a launch-ready direction:\n\n1) Headline: "Ship polished product flows before your first engineer starts."\n2) Headline: "From idea to demo in under 30 minutes — with conversion-aware defaults."\n3) Headline: "Turn rough specs into launch-grade UI, copy, and agent workflows."\n\nBest for conversion: #2. It has concrete speed + clear output + implied certainty.\n\nExecution plan:\n- Use pretext-stable chat so demos feel smooth on mobile.\n- Add one-click prompt starters by persona.\n- Surface KPI telemetry (TTFT, tokens/sec, conversion copy score).\n- Close with "Generate my demo" CTA above the fold.`,
+`Great brief. If you want top-tier AI chat behavior, treat UX as a system:\n\n**A. Fast confidence**\n- Stream in <300ms TTFT\n- Keep layout stable while streaming\n- Show retrieval/tool badges\n\n**B. Control & trust**\n- Stop + regenerate\n- Thread memory controls\n- Copy/export action rail\n\n**C. Agent usefulness**\n- Prompt chips per use case\n- Multi-turn planning with checklists\n- Suggest next best action after each answer\n\nPretext belongs in A (stability), but your win is A+B+C together.`
     ];
 
     let pretext;
     try {
       pretext = await import('https://esm.sh/@chenglou/pretext@0.0.4');
-    } catch (e) {
-      statusEl.textContent = `Could not load Pretext: ${e?.message || e}`;
-      statusEl.style.color = '#ff9fa0';
+    } catch {}
+
+    let threads = [];
+    let activeThreadId = null;
+    let lastUserPrompt = '';
+    let stopRequested = false;
+
+    function createThread(name = 'New chat') {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const thread = {
+        id,
+        name,
+        updatedAt: Date.now(),
+        messages: [
+          {
+            role: 'assistant',
+            text: 'I’m your Pixel Agent copilot. Ask for launch copy, flow plans, or UX critique and I’ll stream a structured response.',
+            meta: { tools: ['strategy', 'copy', 'ux'], confidence: 'high' }
+          }
+        ]
+      };
+      threads.unshift(thread);
+      activeThreadId = id;
+      renderThreads();
+      renderChat();
     }
 
-    function addMsg(role, text='') {
-      const el = document.createElement('div');
-      el.className = `msg ${role}`;
+    function getActiveThread() {
+      return threads.find((t) => t.id === activeThreadId);
+    }
+
+    function renderThreads() {
+      threadList.innerHTML = '';
+      for (const t of threads) {
+        const el = document.createElement('button');
+        el.className = `thread ${t.id === activeThreadId ? 'active' : ''}`;
+        const last = t.messages[t.messages.length - 1]?.text || 'No messages yet';
+        el.innerHTML = `<h4>${t.name}</h4><p>${last.slice(0, 58).replace(/\n/g, ' ')}</p>`;
+        el.onclick = () => {
+          activeThreadId = t.id;
+          renderThreads();
+          renderChat();
+        };
+        threadList.appendChild(el);
+      }
+    }
+
+    function addMessage(role, text, meta) {
+      const thread = getActiveThread();
+      thread.messages.push({ role, text, meta });
+      thread.updatedAt = Date.now();
+      if (role === 'user' && text.length > 20) thread.name = text.slice(0, 32) + (text.length > 32 ? '…' : '');
+      renderThreads();
+    }
+
+    function renderAssistantMeta(meta = {}) {
+      const wrap = document.createElement('div');
+      wrap.className = 'assistant-meta';
+      if (meta.model) wrap.appendChild(badge(`model: ${meta.model}`));
+      if (meta.tools?.length) wrap.appendChild(badge(`tools: ${meta.tools.join(', ')}`));
+      if (meta.confidence) wrap.appendChild(badge(`confidence: ${meta.confidence}`));
+      const copy = document.createElement('button');
+      copy.className = 'btn-inline btn-ghost';
+      copy.textContent = 'Copy';
+      copy.onclick = () => navigator.clipboard?.writeText(meta.textForCopy || '');
+      wrap.appendChild(copy);
+      return wrap;
+    }
+
+    function badge(text) {
+      const el = document.createElement('span');
+      el.className = 'badge';
       el.textContent = text;
-      chat.appendChild(el);
-      chat.scrollTop = chat.scrollHeight;
       return el;
     }
 
-    function seed() {
+    function renderChat() {
+      const thread = getActiveThread();
       chat.innerHTML = '';
-      addMsg('assistant', 'Welcome — switch between DOM and Pretext mode, then send prompts and watch the stream behavior.');
+
+      const contextChars = thread.messages.reduce((n, m) => n + m.text.length, 0);
+      kpiContext.textContent = String(contextChars);
+
+      for (const m of thread.messages) {
+        const row = document.createElement('div');
+        row.className = `row ${m.role}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${m.role === 'assistant' ? 'assistant' : 'user'}`;
+        bubble.textContent = m.text;
+        row.appendChild(bubble);
+
+        if (m.role === 'assistant') {
+          const meta = renderAssistantMeta({ ...m.meta, textForCopy: m.text });
+          bubble.appendChild(meta);
+        }
+
+        chat.appendChild(row);
+      }
+      chat.scrollTop = chat.scrollHeight;
     }
 
-    async function streamAssistant(fullText) {
+    async function streamAssistant(replyText) {
       const mode = modeEl.value;
-      const font = fontEl.value.trim() || '16px Inter';
-      const lineHeight = Number(lineHeightEl.value) || 24;
       kpiMode.textContent = mode;
+      const thread = getActiveThread();
 
-      const bubble = addMsg('assistant', '');
+      const row = document.createElement('div');
+      row.className = 'row assistant';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble assistant';
+      row.appendChild(bubble);
+      chat.appendChild(row);
+
+      const font = '16px Inter';
+      const lineHeight = 23;
       bubble.style.font = font;
       bubble.style.lineHeight = `${lineHeight}px`;
 
-      const bubbleWidth = 336; // max-width minus horizontal padding
+      const bubbleWidth = 650;
       if (mode === 'pretext' && pretext) {
-        const prepared = pretext.prepare(fullText, font, { whiteSpace: 'pre-wrap' });
+        const prepared = pretext.prepare(replyText, font, { whiteSpace: 'pre-wrap' });
         const measured = pretext.layout(prepared, bubbleWidth, lineHeight);
-        const verticalChrome = 22; // 10px top + 10px bottom + 1px*2 border
-        bubble.style.height = `${Math.max(lineHeight + verticalChrome, measured.height + verticalChrome)}px`;
-      } else {
-        bubble.style.height = '';
+        const chrome = 22;
+        bubble.style.height = `${Math.max(lineHeight + chrome, measured.height + chrome)}px`;
       }
 
+      bubble.innerHTML = `<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
+
+      const start = performance.now();
+      await sleep(120 + Math.random() * 150);
+      const firstTokenAt = performance.now();
+      kpiTTFT.textContent = `${Math.round(firstTokenAt - start)}ms`;
+
+      let visible = '';
+      let idx = 0;
       let totalShift = 0;
       let prevHeight = bubble.getBoundingClientRect().height;
       let frames = 0;
-      const start = performance.now();
+      let streamedChars = 0;
+      const streamStart = performance.now();
 
-      for (let i = 1; i <= fullText.length; i += 5) {
-        bubble.textContent = fullText.slice(0, i);
+      while (idx < replyText.length) {
+        if (stopRequested) break;
+        const step = 4 + Math.floor(Math.random() * 8);
+        idx = Math.min(replyText.length, idx + step);
+        visible = replyText.slice(0, idx);
+        streamedChars += step;
+
+        bubble.textContent = visible;
         const h = bubble.getBoundingClientRect().height;
         totalShift += Math.abs(h - prevHeight);
         prevHeight = h;
         frames++;
+
+        const elapsedSec = Math.max((performance.now() - streamStart) / 1000, 0.001);
+        kpiTPS.textContent = String(Math.round((streamedChars / 4) / elapsedSec));
+        kpiFrames.textContent = String(frames);
+        kpiShift.textContent = totalShift.toFixed(1);
+
         chat.scrollTop = chat.scrollHeight;
-        await sleep(8);
+        await sleep(20 + Math.random() * 24);
       }
 
-      kpiShift.textContent = totalShift.toFixed(1);
-      kpiFrames.textContent = String(frames);
-      kpiMs.textContent = (performance.now() - start).toFixed(1);
-      statusEl.textContent = `Done. ${mode === 'pretext' ? 'Pre-sized bubble kept layout stable.' : 'Baseline bubble grew during stream.'}`;
-      statusEl.style.color = '#9eabcf';
-    }
+      const wasStopped = stopRequested;
+      stopRequested = false;
 
-    async function onSend() {
-      const q = inputEl.value.trim();
-      if (!q) return;
-      sendBtn.disabled = true;
-      addMsg('user', q);
-      statusEl.textContent = 'Streaming assistant response...';
+      const finalText = wasStopped ? `${visible}\n\n[Generation stopped]` : visible;
+      bubble.textContent = finalText;
+      bubble.appendChild(renderAssistantMeta({
+        model: document.getElementById('model').value,
+        tools: ['retrieval', 'planner', 'copy-refiner'],
+        confidence: wasStopped ? 'partial' : 'high',
+        textForCopy: finalText
+      }));
 
-      const reply = replies[Math.floor(Math.random() * replies.length)];
-      await streamAssistant(reply);
+      thread.messages.push({
+        role: 'assistant',
+        text: finalText,
+        meta: {
+          model: document.getElementById('model').value,
+          tools: ['retrieval', 'planner', 'copy-refiner'],
+          confidence: wasStopped ? 'partial' : 'high'
+        }
+      });
+      thread.updatedAt = Date.now();
 
+      regenBtn.disabled = false;
       sendBtn.disabled = false;
+      stopBtn.disabled = true;
+      renderThreads();
+
+      statusEl.textContent = wasStopped
+        ? 'Stopped. You can regenerate from the last prompt.'
+        : mode === 'pretext'
+          ? 'Done. Stable stream complete with Pretext pre-sizing.'
+          : 'Done. Stream complete (DOM mode: more growth shift expected).';
+      statusEl.className = `status ${wasStopped ? 'warn' : 'ok'}`;
     }
+
+    async function handleSend(promptText = null) {
+      const q = (promptText || inputEl.value).trim();
+      if (!q) return;
+
+      const thread = getActiveThread();
+      if (!thread) createThread();
+
+      addMessage('user', q);
+      renderChat();
+      chat.scrollTop = chat.scrollHeight;
+
+      inputEl.value = '';
+      lastUserPrompt = q;
+      sendBtn.disabled = true;
+      stopBtn.disabled = false;
+      regenBtn.disabled = true;
+      statusEl.textContent = 'Agent responding…';
+      statusEl.className = 'status';
+
+      const reply = assistantReplies[Math.floor(Math.random() * assistantReplies.length)];
+      await streamAssistant(reply);
+    }
+
+    document.getElementById('newThread').addEventListener('click', () => createThread());
+
+    sendBtn.addEventListener('click', () => handleSend());
+    stopBtn.addEventListener('click', () => {
+      stopRequested = true;
+      statusEl.textContent = 'Stopping generation…';
+      statusEl.className = 'status warn';
+    });
+
+    regenBtn.addEventListener('click', async () => {
+      if (!lastUserPrompt) return;
+      statusEl.textContent = 'Regenerating from last prompt…';
+      statusEl.className = 'status';
+      await handleSend(lastUserPrompt);
+    });
+
+    inputEl.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSend();
+    });
 
     modeEl.addEventListener('change', () => {
       statusEl.textContent = modeEl.value === 'pretext'
-        ? 'Pretext mode: assistant bubbles are pre-sized before stream.'
-        : 'DOM mode: assistant bubble grows naturally during stream.';
+        ? 'Pretext enabled: bubble is measured before streaming.'
+        : 'DOM baseline enabled: bubble grows as tokens stream.';
+      statusEl.className = 'status';
     });
 
-    sendBtn.addEventListener('click', onSend);
-    inputEl.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSend();
+    document.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        inputEl.value = chip.dataset.prompt || '';
+        inputEl.focus();
+      });
     });
 
-    seed();
+    createThread('Launch brainstorming');
+    renderChat();
   </script>
 </body>
 </html>
