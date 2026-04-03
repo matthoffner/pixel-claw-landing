@@ -264,6 +264,28 @@
         color: #ffffff;
       }
 
+      .proof-links {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .proof-link {
+        border: 1px solid #3a5277;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: #cfe1ff;
+        text-decoration: none;
+        background: rgba(16, 29, 52, 0.75);
+      }
+
+      .proof-link:hover {
+        border-color: #5be5ff;
+        color: #ffffff;
+      }
+
       .offer-strip {
         margin-top: 12px;
         border: 1px solid #3f5f8f;
@@ -375,6 +397,11 @@
             <div class="proof-kpi"><strong>Lead follow-up:</strong> 42% faster first response in a timed operator simulation.</div>
             <div class="proof-kpi"><strong>Support triage:</strong> 31% fewer manual routing touches before escalation.</div>
             <div class="proof-kpi"><strong>Delivery target:</strong> TestFlight pilot teams receive weekly KPI snapshots + action logs.</div>
+          </div>
+          <div class="proof-links">
+            <a class="proof-link" href="/poc/web-demo.html#lead-follow-up">View lead follow-up timeline artifact</a>
+            <a class="proof-link" href="/poc/web-demo.html#support-triage">View support triage routing artifact</a>
+            <a class="proof-link" href="/poc/pretext-chat-showcase.html#kpi-logs">View weekly KPI log sample</a>
           </div>
         </div>
 
