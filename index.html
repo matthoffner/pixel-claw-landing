@@ -354,6 +354,26 @@
         font-size: 15px;
       }
 
+      .assurance-strip {
+        margin-top: 12px;
+        border: 1px solid #3a5c88;
+        border-radius: 12px;
+        padding: 10px;
+        background: rgba(14, 27, 49, 0.7);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .assurance-pill {
+        border: 1px solid #3e5b86;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 13px;
+        color: #d7e6ff;
+        background: rgba(11, 21, 40, 0.72);
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;
@@ -387,6 +407,12 @@
           <strong style="color:#ffffff;">April intake:</strong> 2 pilot starts remaining. Teams that submit a fit check by Friday get a launch plan + ROI model within 24 hours.
           <a href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20Pilot%20Intake%20Call%20%5Bhome-intake-inline%5D&body=Source%3A%20pixel-claw%20landing%20%7C%20intake_inline_cta%0ATeam%20name%3A%0AWorkflow%20priority%3A%0ATarget%20go-live%20date%3A" style="color:#8ad5ff;">Book pilot intake call</a>.
         </p>
+
+        <div class="assurance-strip">
+          <span class="assurance-pill">Reply SLA: within 4 business hours</span>
+          <span class="assurance-pill">Kickoff window: first workflow live in 7 days</span>
+          <span class="assurance-pill">April capacity: 2 pilot starts left</span>
+        </div>
 
         <div class="fit-check">
           <h3>Pilot fit check (60 seconds)</h3>
