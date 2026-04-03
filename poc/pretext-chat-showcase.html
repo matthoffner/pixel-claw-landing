@@ -94,7 +94,7 @@
 
     .topbar {
       display: grid;
-      grid-template-columns: 1.1fr .7fr .7fr .9fr;
+      grid-template-columns: 1.2fr .8fr .8fr;
       gap: 8px;
       align-items: end;
       background: var(--panel-2);
@@ -136,7 +136,8 @@
     .row.user { justify-content: flex-end; }
 
     .bubble {
-      max-width: 680px;
+      width: fit-content;
+      max-width: min(560px, 78%);
       border-radius: 14px;
       border: 1px solid;
       padding: 10px 12px;
@@ -264,11 +265,8 @@
           </select>
         </div>
         <div>
-          <label for="mode">Render mode</label>
-          <select id="mode">
-            <option value="dom">DOM baseline</option>
-            <option value="pretext" selected>Pretext pre-size</option>
-          </select>
+          <label>Render</label>
+          <input value="Pretext pre-size (locked)" disabled />
         </div>
       </section>
 
@@ -310,7 +308,6 @@
     const stopBtn = document.getElementById('stop');
     const regenBtn = document.getElementById('regenerate');
     const statusEl = document.getElementById('status');
-    const modeEl = document.getElementById('mode');
 
     const kpiTTFT = document.getElementById('kpiTTFT');
     const kpiTPS = document.getElementById('kpiTPS');
@@ -432,8 +429,7 @@
     }
 
     async function streamAssistant(replyText) {
-      const mode = modeEl.value;
-      kpiMode.textContent = mode;
+      kpiMode.textContent = 'pretext';
       const thread = getActiveThread();
 
       const row = document.createElement('div');
@@ -448,8 +444,8 @@
       bubble.style.font = font;
       bubble.style.lineHeight = `${lineHeight}px`;
 
-      const bubbleWidth = 650;
-      if (mode === 'pretext' && pretext) {
+      const bubbleWidth = Math.min(560, Math.floor(chat.clientWidth * 0.78));
+      if (pretext) {
         const prepared = pretext.prepare(replyText, font, { whiteSpace: 'pre-wrap' });
         const measured = pretext.layout(prepared, bubbleWidth, lineHeight);
         const chrome = 22;
@@ -523,9 +519,7 @@
 
       statusEl.textContent = wasStopped
         ? 'Stopped. You can regenerate from the last prompt.'
-        : mode === 'pretext'
-          ? 'Done. Stable stream complete with Pretext pre-sizing.'
-          : 'Done. Stream complete (DOM mode: more growth shift expected).';
+        : 'Done. Stable stream complete with Pretext pre-sizing.';
       statusEl.className = `status ${wasStopped ? 'warn' : 'ok'}`;
     }
 
@@ -572,12 +566,6 @@
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSend();
     });
 
-    modeEl.addEventListener('change', () => {
-      statusEl.textContent = modeEl.value === 'pretext'
-        ? 'Pretext enabled: bubble is measured before streaming.'
-        : 'DOM baseline enabled: bubble grows as tokens stream.';
-      statusEl.className = 'status';
-    });
 
     document.querySelectorAll('.chip').forEach((chip) => {
       chip.addEventListener('click', () => {
