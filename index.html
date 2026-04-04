@@ -408,6 +408,38 @@
         background: rgba(11, 21, 40, 0.72);
       }
 
+      .roi-snapshot {
+        margin-top: 12px;
+        border: 1px solid #4a6a98;
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(16, 31, 55, 0.8);
+      }
+
+      .roi-snapshot h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+
+      .roi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 8px;
+      }
+
+      .roi-card {
+        border: 1px solid #3f5f8f;
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(11, 21, 40, 0.82);
+        color: #d7e6ff;
+        font-size: 14px;
+      }
+
+      .roi-card strong {
+        color: #ffffff;
+      }
+
       @media (max-width: 900px) {
         .layout {
           grid-template-columns: 1fr;
@@ -505,6 +537,19 @@
           </p>
           <p style="margin-top:8px; font-size:14px; color:#d5e3ff;">
             <a href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20ROI%20Estimate%20%5Bhome-roi-estimate%5D&body=Source%3A%20pixel-claw%20landing%20%7C%20roi_estimate_cta%0ATeam%20size%3A%0AWorkflows%20to%20automate%3A%0ACurrent%20hours%20spent%20per%20week%3A%0ATarget%20monthly%20ROI%3A" style="color:#8ad5ff;">Get a 24-hour ROI estimate</a> with a recommended package and launch timeline.
+          </p>
+        </div>
+
+        <div class="roi-snapshot">
+          <h3>ROI snapshots by workflow volume</h3>
+          <div class="roi-grid">
+            <div class="roi-card"><strong>20 hrs/mo saved</strong><br />$1.6k–$2.4k monthly labor recovered at $80–$120/hr.</div>
+            <div class="roi-card"><strong>40 hrs/mo saved</strong><br />$3.2k–$4.8k monthly labor recovered (covers Starter pilot in many teams).</div>
+            <div class="roi-card"><strong>70 hrs/mo saved</strong><br />$5.6k–$8.4k monthly labor recovered (fits Growth/Scale economics).</div>
+          </div>
+          <p style="margin-top:10px; font-size:14px; color:#d5e3ff;">
+            Send current weekly volume + team rate and get a custom ROI model in 24 hours.
+            <a href="mailto:matt@hoffnersystems.com?subject=Pixel%20Claw%20ROI%20Snapshot%20Request%20%5Bhome-roi-snapshot%5D&body=Source%3A%20pixel-claw%20landing%20%7C%20roi_snapshot_cta%0ATeam%20name%3A%0AWorkflow%20volume%20per%20week%3A%0AAverage%20hourly%20rate%3A%0ATarget%20hours%20saved%20per%20month%3A" style="color:#8ad5ff;">Request ROI snapshot</a>.
           </p>
         </div>
 
